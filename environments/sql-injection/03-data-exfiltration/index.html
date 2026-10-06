@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>SQLi Lab 03 — Data Exfiltration</title>
+    <script>
+      (function () {
+        var t = new URLSearchParams(location.search).get("theme");
+        if (t) document.documentElement.dataset.theme = t;
+      })();
+    </script>
+    <link rel="stylesheet" href="../../../css/theme.css" />
+    <link rel="stylesheet" href="../../../css/components.css" />
+    <link rel="stylesheet" href="../../../css/labs.css" />
+  </head>
+  <body>
+    <div class="lab-page">
+      <div class="lab-brand">
+        <strong>SQL INJECTION / LAB 03</strong><span>DATA EXFILTRATION</span>
+      </div>
+      <div class="lab-container">
+        <h1>Data Exfiltration</h1>
+        <p class="lead">
+          A public profile viewer. It only returns the name of a user by ID —
+          but if you can reshape the query, you can read columns the developer
+          never intended to expose.
+        </p>
+        <div class="lab-card">
+          <div class="eyebrow">PROFILE LOOKUP</div>
+          <label>User ID</label
+          ><input id="uid" class="lab-input" value="2" autocomplete="off" />
+          <button id="lookup" class="lab-btn">LOOKUP</button>
+          <div id="output"></div>
+        </div>
+        <div class="lab-card">
+          <div class="eyebrow">CHALLENGES</div>
+          <div class="challenge">
+            <strong>01 — Discover the column count</strong
+            ><small
+              >The query returns exactly one column. Try UNION SELECT with
+              different column counts and read the error carefully.</small
+            >
+          </div>
+          <div class="challenge">
+            <strong>02 — Leak the password column</strong
+            ><small
+              >Once the column count matches, replace the returned column with
+              <code>password</code> from the users table.</small
+            >
+          </div>
+          <div class="challenge">
+            <strong>03 — Leak multiple columns at once</strong
+            ><small
+              >The database has a <code>role</code> column too. Combine two
+              columns into one output column.</small
+            >
+          </div>
+          <details class="lab-solutions">
+            <summary>View solutions</summary>
+
+            <div class="solution">
+              <strong>01 — Find the column count</strong>
+              <small>The base query returns exactly one column.</small>
+              <pre><code>User ID: ' UNION SELECT 1 --</code></pre>
+              <p class="muted" style="margin: 8px 0 0">
+                If the error says the column counts don't match, try fewer or
+                more values until it accepts it.
+              </p>
+            </div>
+
+            <div class="solution">
+              <strong>02 — Leak the password column</strong>
+              <small>Replace the returned column with the sensitive one.</small>
+              <pre><code>User ID: ' UNION SELECT password FROM users --</code></pre>
+            </div>
+
+            <div class="solution">
+              <strong>03 — Leak every sensitive column at once</strong>
+              <small>Return one row per user.</small>
+              <pre><code>User ID: ' UNION SELECT password FROM users WHERE role = 'admin' --</code></pre>
+              <p class="muted" style="margin: 8px 0 0">
+                The lab's simplified engine doesn't support string concatenation
+                with
+                <code>||</code>, so one column per query is the intended path.
+              </p>
+            </div>
+          </details>
+          <button id="reset" class="lab-btn secondary">RESET</button>
+        </div>
+      </div>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</html>

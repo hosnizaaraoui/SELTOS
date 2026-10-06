@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>XSS Lab 01 — Reflected Search</title>
+    <script>
+      (function () {
+        var t = new URLSearchParams(location.search).get("theme");
+        if (t) document.documentElement.dataset.theme = t;
+      })();
+    </script>
+    <link rel="stylesheet" href="../../../css/theme.css" />
+    <link rel="stylesheet" href="../../../css/components.css" />
+    <link rel="stylesheet" href="../../../css/labs.css" />
+  </head>
+  <body>
+    <div class="lab-page">
+      <div class="lab-brand">
+        <strong>CROSS-SITE SCRIPTING / LAB 01</strong><span>Reflected Search</span>
+      </div>
+      <div class="lab-container">
+        <h1>Reflected Search</h1>
+        <p class="lead">The page echoes your search term back into the HTML. Investigate what happens when the term contains markup.</p>
+        <div class="lab-card">
+          <div class="eyebrow">SEARCH</div>
+          <label>Search</label>
+          <input id="q" class="lab-input" value="keyboard" autocomplete="off" />
+          <label><input type="checkbox" id="enc" /> Enable output encoding (the fix)</label>
+          <button id="search" class="lab-btn">SEARCH</button>
+          <div id="output"></div>
+        </div>
+        <div class="lab-card">
+          <div class="eyebrow">CHALLENGES</div>
+          <div class="challenge"><strong>01 — Inject an element</strong><small>Make the page contain an element you wrote.</small></div>
+          <div class="challenge"><strong>02 — Get JavaScript execution</strong><small>Find a payload that would run code in the victim's browser.</small></div>
+          <div class="challenge"><strong>03 — Defend</strong><small>Enable output encoding and compare the HTML source.</small></div>
+          <details class="lab-solutions">
+            <summary>View solutions</summary>
+            <div class="solution"><strong>01 — HTML injection</strong><pre><code>Search: &lt;h1&gt;pwned&lt;/h1&gt;</code></pre></div>
+            <div class="solution"><strong>02 — Script execution</strong><pre><code>Search: &lt;img src=x onerror=alert(1)&gt;</code></pre><p class="muted">Event-handler payloads work even when <code>&lt;script&gt;</code> tags are filtered. <code>&lt;script&gt;alert(1)&lt;/script&gt;</code> works too.</p></div>
+            <div class="solution"><strong>03 — Fix</strong><p class="muted">Encode <code>&amp; &lt; &gt; "</code> according to the output context, and add a Content-Security-Policy as defense in depth.</p></div>
+          </details>
+          <button id="reset" class="lab-btn secondary">RESET</button>
+        </div>
+      </div>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</html>

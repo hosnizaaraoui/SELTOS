@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>SQLi Lab 04 — Order By Injection</title>
+    <script>
+      (function () {
+        var t = new URLSearchParams(location.search).get("theme");
+        if (t) document.documentElement.dataset.theme = t;
+      })();
+    </script>
+    <link rel="stylesheet" href="../../../css/theme.css" />
+    <link rel="stylesheet" href="../../../css/components.css" />
+    <link rel="stylesheet" href="../../../css/labs.css" />
+  </head>
+  <body>
+    <div class="lab-page">
+      <div class="lab-brand">
+        <strong>SQL INJECTION / LAB 04</strong><span>ORDER BY CLAUSE</span>
+      </div>
+      <div class="lab-container">
+        <h1>Order By Injection</h1>
+        <p class="lead">
+          The ORDER BY clause can't use placeholders in most drivers. Here the
+          sort column is concatenated directly — and that's all it takes.
+        </p>
+
+        <div class="lab-card">
+          <div class="eyebrow">PRODUCT CATALOG</div>
+          <label>Sort column</label
+          ><input id="sort" class="lab-input" value="name" autocomplete="off" />
+          <label>Category filter</label
+          ><input id="cat" class="lab-input" value="tools" autocomplete="off" />
+          <button id="run" class="lab-btn">RUN</button>
+          <div id="output"></div>
+        </div>
+
+        <div class="lab-card">
+          <div class="eyebrow">CHALLENGES</div>
+          <div class="challenge">
+            <strong>01 — Leak the admin password</strong
+            ><small
+              >The users table has a password column. Make it appear in the
+              result rows.</small
+            >
+          </div>
+          <div class="challenge">
+            <strong>02 — Sort by a hidden column</strong
+            ><small
+              >Order by cost even though it's not shown in the SELECT
+              list.</small
+            >
+          </div>
+          <div class="challenge">
+            <strong>03 — Force an error to fingerprint the table</strong
+            ><small
+              >Make the query fail in a way that reveals the table name.</small
+            >
+          </div>
+          <button id="reset" class="lab-btn secondary">RESET</button>
+        </div>
+
+        <details class="lab-solutions">
+          <summary>View solutions</summary>
+          <div class="solution">
+            <strong>01 — Leak the admin password</strong>
+            <small>Append a UNION SELECT to the sort column.</small>
+            <pre><code>name FROM products WHERE category = 'tools' UNION SELECT password, password, password FROM users --</code></pre>
+            <p class="muted" style="margin: 8px 0 0">
+              The injected UNION adds the users.password column as extra rows.
+            </p>
+          </div>
+          <div class="solution">
+            <strong>02 — Sort by a hidden column</strong>
+            <small
+              >ORDER BY can reference columns not in the SELECT list.</small
+            >
+            <pre><code>cost</code></pre>
+            <p class="muted" style="margin: 8px 0 0">
+              The engine accepts any column name in ORDER BY, even ones not
+              selected.
+            </p>
+          </div>
+          <div class="solution">
+            <strong>03 — Force an error to fingerprint the table</strong>
+            <small>Reference a non-existent table in a UNION.</small>
+            <pre><code>name FROM products WHERE category = 'tools' UNION SELECT * FROM secret --</code></pre>
+            <p class="muted" style="margin: 8px 0 0">
+              The error message reveals the unknown table name, confirming the
+              schema.
+            </p>
+          </div>
+        </details>
+      </div>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</html>

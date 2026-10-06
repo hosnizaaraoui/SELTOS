@@ -1,0 +1,337 @@
+/* Every lab is its own document; the desktop reset doesn't reach it. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  background: var(--panel);
+  color: var(--text);
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+}
+
+/* The lab wrapper fills the iframe; the page scrolls, not the wrapper. */
+.lab-page {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+}
+
+/* Header strip */
+.lab-brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg) 60%, transparent);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+}
+.lab-brand strong {
+  font-weight: 800;
+}
+.lab-brand span {
+  color: var(--accent);
+}
+
+/* Content column */
+.lab-container {
+  width: 100%;
+  max-width: 720px;
+  margin: 28px auto 48px;
+  padding: 0 22px;
+  flex: 1;
+}
+.lab-container h1 {
+  font-size: 26px;
+  letter-spacing: -0.02em;
+  margin: 0 0 6px;
+}
+.lab-container .lead {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 0 0 20px;
+}
+
+/* Card */
+.lab-card {
+  border: 1px solid var(--line);
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 18px;
+  margin: 0 0 14px;
+}
+
+/* Inputs + labels */
+.lab-card label {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 12px 0 6px;
+}
+.lab-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid var(--line2);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--text);
+  font:
+    13px ui-monospace,
+    Menlo,
+    monospace;
+  outline: none;
+  transition: border-color 0.12s ease;
+}
+.lab-input:focus {
+  border-color: var(--accent);
+}
+
+/* Buttons */
+.lab-btn {
+  margin-top: 14px;
+  padding: 9px 14px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--bg);
+  border-radius: 8px;
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: filter 0.12s ease;
+}
+.lab-btn:hover {
+  filter: brightness(1.08);
+}
+.lab-btn.secondary {
+  background: transparent;
+  color: var(--accent);
+}
+
+/* Eyebrow */
+.eyebrow {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+/* Query display */
+.query-box {
+  margin-top: 14px;
+  padding: 11px 12px;
+  background: #070b0b;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font:
+    11px/1.55 ui-monospace,
+    Menlo,
+    monospace;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow: auto;
+  max-height: 260px;
+}
+.query-box .inj {
+  color: var(--warn);
+  font-weight: 800;
+}
+
+/* Result text */
+.result-ok {
+  color: var(--ok);
+  font-size: 12px;
+  margin: 10px 0 0;
+}
+.result-bad {
+  color: var(--danger);
+  font-size: 12px;
+  margin: 10px 0 0;
+}
+
+/* Tables */
+.lab-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  margin-top: 12px;
+}
+.lab-table th,
+.lab-table td {
+  border: 1px solid var(--line);
+  padding: 7px 9px;
+  text-align: left;
+}
+.lab-table th {
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.tw {
+  overflow-x: auto;
+}
+
+/* Challenges */
+.challenge {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.challenge:last-child {
+  border-bottom: 0;
+}
+.challenge strong {
+  font-size: 12px;
+}
+.challenge small {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+/* Misc */
+.muted {
+  color: var(--muted);
+  font-size: 12px;
+}
+.success {
+  color: var(--ok);
+}
+.locked {
+  opacity: 0.45;
+}
+
+/* ============================================================
+   SOLUTIONS / SPOILER BLOCK
+   ============================================================ */
+
+.lab-solutions {
+  border: 1px solid var(--line2);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  padding: 4px 18px 4px;
+  margin: 10px 0;
+}
+.lab-solutions > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 14px 0;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  user-select: none;
+}
+.lab-solutions > summary::-webkit-details-marker {
+  display: none;
+}
+.lab-solutions > summary::before {
+  content: "▸";
+  display: inline-block;
+  font-size: 10px;
+  color: var(--accent);
+  transition: transform 0.15s ease;
+}
+.lab-solutions[open] > summary::before {
+  transform: rotate(90deg);
+}
+.lab-solutions > summary::after {
+  content: "SPOILER";
+  margin-left: auto;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--warn);
+  border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent);
+  background: color-mix(in srgb, var(--warn) 8%, transparent);
+  padding: 2px 7px;
+  border-radius: 99px;
+}
+.lab-solutions[open] > summary::after {
+  content: "REVEALED";
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+}
+
+.lab-solutions .solution {
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.lab-solutions .solution:first-of-type {
+  border-top: 0;
+}
+.lab-solutions .solution strong {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+.lab-solutions .solution small {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  margin-bottom: 8px;
+}
+.lab-solutions .solution code,
+.lab-solutions code {
+  background: rgba(0, 0, 0, 0.32);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  color: var(--accent2);
+}
+.lab-solutions pre {
+  background: #070b0b;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  overflow: auto;
+  margin: 8px 0 0;
+  font:
+    11px/1.55 ui-monospace,
+    Menlo,
+    monospace;
+  color: var(--text);
+}
+.lab-solutions pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .lab-container {
+    padding: 0 16px;
+  }
+  .lab-container h1 {
+    font-size: 22px;
+  }
+}

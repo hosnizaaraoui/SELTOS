@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>SQLi Lab 01 — Authentication</title>
+    <script>
+      (function () {
+        var t = new URLSearchParams(location.search).get("theme");
+        if (t) document.documentElement.dataset.theme = t;
+      })();
+    </script>
+    <link rel="stylesheet" href="../../../css/theme.css" />
+    <link rel="stylesheet" href="../../../css/components.css" />
+    <link rel="stylesheet" href="../../../css/labs.css" />
+  </head>
+  <body>
+    <div class="lab-page">
+      <div class="lab-brand">
+        <strong>SQL INJECTION / LAB 01</strong><span>AUTHENTICATION</span>
+      </div>
+      <div class="lab-container">
+        <h1>Authentication Bypass</h1>
+        <p class="lead">
+          A deliberately vulnerable login simulation. Everything is local to
+          this page.
+        </p>
+        <div class="lab-card">
+          <div class="eyebrow">LOGIN PORTAL</div>
+          <label>Username</label
+          ><input
+            id="user"
+            class="lab-input"
+            value="alice"
+            autocomplete="off"
+          />
+          <label>Password</label
+          ><input
+            id="pass"
+            class="lab-input"
+            value="wrong"
+            autocomplete="off"
+          />
+          <button id="login" class="lab-btn">AUTHENTICATE</button>
+          <div id="output"></div>
+        </div>
+        <div class="lab-card">
+          <div class="eyebrow">CHALLENGES</div>
+          <div class="challenge">
+            <strong>01 — Gain access to the admin account</strong
+            ><small>Comment out the password check with a SQL comment.</small>
+          </div>
+          <div class="challenge">
+            <strong>02 — Understand the query</strong
+            ><small
+              >Compare the normal query with the manipulated one shown
+              above.</small
+            >
+          </div>
+          <details class="lab-solutions">
+            <summary>View solutions</summary>
+
+            <div class="solution">
+              <strong>01 — Bypass the password check</strong>
+              <small>Turn the rest of the query into a comment.</small>
+              <pre><code>Username: admin' --
+Password: (anything)</code></pre>
+              <p class="muted" style="margin: 8px 0 0">
+                The <code>--</code> makes SQL ignore everything after it, so the
+                password comparison is removed from the query.
+              </p>
+            </div>
+
+            <div class="solution">
+              <strong>02 — Alternative: force a true condition</strong>
+              <small>Make the WHERE clause always true.</small>
+              <pre><code>Username: ' OR 1=1 --
+Password: (anything)</code></pre>
+              <p class="muted" style="margin: 8px 0 0">
+                The first row of the users table is returned — usually the
+                admin.
+              </p>
+            </div>
+
+            <div class="solution">
+              <strong>03 — Trigger a real SQL error</strong>
+              <small>Break the syntax to see how errors leak structure.</small>
+              <pre><code>Username: '
+Password: (anything)</code></pre>
+              <p class="muted" style="margin: 8px 0 0">
+                The error reveals the shape of the query. In production this
+                should never be shown to a user.
+              </p>
+            </div>
+          </details>
+          <button id="reset" class="lab-btn secondary">RESET</button>
+        </div>
+      </div>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</html>

