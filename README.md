@@ -1,7 +1,7 @@
 # SELT.OS
 
 **Simulated Environment for Learning Technology, Operations & Security**
-
+![SELT.OS HOME](assets/images/home.png)
 SELT.OS is a static, browser-based learning desktop designed to provide small, interactive technical environments without requiring a backend, database, API, container, or external service.
 
 The idea is simple:
@@ -520,9 +520,7 @@ The project is intentionally being built incrementally. The desktop shell comes 
 
 ## License
 
-No license is currently specified by the project.
-
-If this repository is published publicly, add a license file and update this section accordingly.
+This project is licensed under the MIT License.
 
 ---
 
