@@ -2,36 +2,13 @@ window.AppWM = (() => {
   const layer = document.getElementById("windowLayer");
   let z = 20, seq = 0, active = null;
   let tileMode = false;
-  let dock = null;
   let previewEl = null;
 
-  const EDGE = 24;      // snap trigger distance from screen edge
-  const TOP_BAR = 44;   // must match .topbar height in desktop.css
-  const GAP = 12;       // margin used for maximize / tiling
+  const EDGE = 24;
+  const TOP_BAR = 44;
+  const GAP = 12;
 
-  /* ---------------------------------------------------------------
-   * Dock (holds minimized pills)
-   * --------------------------------------------------------------- */
-  function getDock() {
-    if (dock) return dock;
-    dock = document.createElement("div");
-    dock.className = "window-dock";
-    document.body.appendChild(dock);
-    return dock;
-  }
-
-  function updateDockVisibility() {
-    if (!dock) return;
-    const hasVisible = [...dock.querySelectorAll(".dock-pill")]
-      .some(p => !p.classList.contains("out") && !p.classList.contains("hidden"));
-    dock.classList.toggle("has-pills", hasVisible);
-  }
-
-  /* ---------------------------------------------------------------
-   * Create window (with singleton support via `key`)
-   * --------------------------------------------------------------- */
   function createWindow({ key, title, icon = "◈", content = "", width = 720, height = 480, onOpen }) {
-    // --- singleton: reuse an existing window with the same key ---
     if (key) {
       const existing = document.querySelector(`.app-window[data-key="${key}"]`);
       if (existing) {
@@ -91,7 +68,6 @@ window.AppWM = (() => {
 
     w.querySelector('[data-window="close"]').onclick = (e) => {
       e.stopPropagation();
-      removePill(w);
       w.remove();
       if (active === w) active = null;
       if (tileMode) retile();
@@ -115,9 +91,6 @@ window.AppWM = (() => {
     return w;
   }
 
-  /* ---------------------------------------------------------------
-   * Focus / close / workspace
-   * --------------------------------------------------------------- */
   function focus(w) {
     if (!w || w.classList.contains("hidden") || w.classList.contains("minimized")) return;
     w.style.zIndex = ++z;
@@ -129,16 +102,23 @@ window.AppWM = (() => {
   function focusByKey(key) {
     const w = document.querySelector(`.app-window[data-key="${key}"]`);
     if (!w) return null;
-    if (w.classList.contains("minimized")) restore(w);
+    const curWs = String(window.Workspaces ? Workspaces.current() : 1);
+    if (w.dataset.workspace !== curWs) {
+      w.dataset.workspace = curWs;
+    }
     w.classList.remove("hidden");
+    if (w.classList.contains("minimized")) restore(w);
     focus(w);
     return w;
+  }
+
+  function findWindowByKey(key) {
+    return document.querySelector(`.app-window[data-key="${key}"]`);
   }
 
   function closeActive() {
     const w = document.querySelector(".app-window.active:not(.hidden):not(.minimized)") || active;
     if (w && !w.classList.contains("hidden")) {
-      removePill(w);
       w.remove();
       if (active === w) active = null;
       if (tileMode) retile();
@@ -152,48 +132,16 @@ window.AppWM = (() => {
       w.classList.toggle("hidden", hide);
       if (hide) w.classList.remove("active");
     });
-    document.querySelectorAll(".window-dock .dock-pill").forEach(p => {
-      const ws = p.dataset.workspace || "1";
-      p.classList.toggle("hidden", ws !== String(n));
-    });
-    updateDockVisibility();
     if (active && active.classList.contains("hidden")) active = null;
     if (tileMode) retile();
   }
 
-  /* ---------------------------------------------------------------
-   * Minimize / restore (rounded dock pills)
-   * --------------------------------------------------------------- */
   function minimize(w) {
     if (!w || w.classList.contains("minimized")) return;
     w.classList.add("minimized");
     w.classList.remove("active");
     w.dataset.prevZ = w.style.zIndex;
     w.style.zIndex = 1;
-
-    let pill = document.querySelector(`.dock-pill[data-id="${w.dataset.id}"]`);
-    if (!pill) {
-      pill = document.createElement("button");
-      pill.type = "button";
-      pill.className = "dock-pill";
-      pill.dataset.id = w.dataset.id;
-      pill.dataset.workspace = w.dataset.workspace;
-      pill.innerHTML = `
-        <span class="dock-pill-icon">${w.dataset.icon || "◈"}</span>
-        <span class="dock-pill-title">${w.dataset.title || "Window"}</span>
-      `;
-      pill.addEventListener("click", () => restore(w));
-      getDock().appendChild(pill);
-      void pill.offsetWidth;
-      requestAnimationFrame(() => pill.classList.add("in"));
-    } else {
-      pill.classList.remove("hidden", "out");
-      void pill.offsetWidth;
-      requestAnimationFrame(() => pill.classList.add("in"));
-    }
-
-    updateDockVisibility();
-
     if (active === w) active = null;
     if (tileMode) retile();
   }
@@ -202,27 +150,10 @@ window.AppWM = (() => {
     if (!w || !w.classList.contains("minimized")) return;
     w.classList.remove("minimized");
     if (w.dataset.prevZ) w.style.zIndex = w.dataset.prevZ;
-    removePill(w);
     focus(w);
     if (tileMode) retile();
   }
 
-  function removePill(w) {
-    const pill = document.querySelector(`.dock-pill[data-id="${w.dataset.id}"]`);
-    if (!pill) return;
-    pill.classList.remove("in");
-    pill.classList.add("out");
-    const done = () => {
-      pill.remove();
-      updateDockVisibility();
-    };
-    pill.addEventListener("transitionend", done, { once: true });
-    setTimeout(done, 300);
-  }
-
-  /* ---------------------------------------------------------------
-   * Dragging (with Aero-snap preview)
-   * --------------------------------------------------------------- */
   function makeDraggable(w) {
     const bar = w.querySelector(".window-bar");
     let drag = false, sx = 0, sy = 0, sl = 0, st = 0;
@@ -263,9 +194,6 @@ window.AppWM = (() => {
     });
   }
 
-  /* ---------------------------------------------------------------
-   * Resizing
-   * --------------------------------------------------------------- */
   function makeResizable(w) {
     const MIN_W = 320, MIN_H = 220;
 
@@ -325,9 +253,6 @@ window.AppWM = (() => {
     });
   }
 
-  /* ---------------------------------------------------------------
-   * Maximize
-   * --------------------------------------------------------------- */
   function toggleMaximize(w) {
     if (w.classList.contains("minimized")) {
       restore(w);
@@ -354,9 +279,6 @@ window.AppWM = (() => {
     w._snapZone = null;
   }
 
-  /* ---------------------------------------------------------------
-   * Snap zones (halves + quarters + maximize)
-   * --------------------------------------------------------------- */
   function detectSnapZone(x, y) {
     const nearLeft = x <= EDGE;
     const nearRight = x >= innerWidth - EDGE;
@@ -423,9 +345,6 @@ window.AppWM = (() => {
     w.style.height = r.h + "px";
   }
 
-  /* ---------------------------------------------------------------
-   * Tiling (grid mode)
-   * --------------------------------------------------------------- */
   function setTileMode(on) {
     tileMode = !!on;
     if (tileMode) retile();
@@ -463,9 +382,6 @@ window.AppWM = (() => {
     });
   }
 
-  /* ---------------------------------------------------------------
-   * Re-fit on viewport resize
-   * --------------------------------------------------------------- */
   window.addEventListener("resize", () => {
     if (tileMode) { retile(); return; }
     document.querySelectorAll(".app-window").forEach(w => {
@@ -481,9 +397,6 @@ window.AppWM = (() => {
     });
   });
 
-  /* ---------------------------------------------------------------
-   * Public API
-   * --------------------------------------------------------------- */
   return {
     createWindow,
     closeActive,
@@ -494,6 +407,8 @@ window.AppWM = (() => {
     setTileMode,
     isTileMode: () => tileMode,
     snapWindow,
-    focusByKey
+    focus,
+    focusByKey,
+    findWindowByKey
   };
 })();

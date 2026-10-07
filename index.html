@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="css/theme.css" />
     <link rel="stylesheet" href="css/desktop.css" />
     <link rel="stylesheet" href="css/windows.css" />
+    <link rel="stylesheet" href="css/dock.css" />
     <link rel="stylesheet" href="css/components.css" />
   </head>
   <body>
@@ -24,7 +25,6 @@
         <span>SELT.OS</span>
       </div>
       <div class="system-info">
-        <span id="statusText"></span>
         <span class="dot"></span>
         <span id="clock">00:00</span>
         <div class="theme-switcher" role="group" aria-label="Theme">
@@ -52,56 +52,92 @@
 
     <main id="desktop" class="desktop">
       <section class="welcome-card">
-        <div class="welcome-intro">
-          <div class="eyebrow">LOCAL LEARNING ENVIRONMENT</div>
-          <h1>Break things.<br />Understand them.</h1>
-          <p>
-            A self-contained browser desktop for hands-on technical labs. No
-            servers, no setup — just open a workspace and start poking.
-          </p>
+        <header class="hud-head">
+          <div class="hud-brand">
+            <span class="hud-mark">◈</span>
+            <span class="hud-name">SELT.OS</span>
+          </div>
+          <span class="hud-version">v1.0 · local</span>
+        </header>
 
-          <div class="quick-shortcuts">
-            <button data-action="environments">
-              <kbd>Super</kbd><kbd>N</kbd><span>Environments</span>
-            </button>
-            <button data-action="apps">
-              <kbd>Super</kbd><kbd>D</kbd><span>Applications</span>
-            </button>
-            <button data-action="settings">
-              <kbd>Super</kbd><kbd>S</kbd><span>Settings</span>
-            </button>
-            <button data-action="terminal">
-              <kbd>Super</kbd><kbd>K</kbd><span>Terminal</span>
-            </button>
+        <div class="hud-status">
+          <span class="hud-dot"></span>
+          <span id="hudStatus">Ready · no windows open</span>
+        </div>
+
+        <div class="hud-stats">
+          <div class="hud-stat">
+            <span class="hud-stat-label">WORKSPACE</span>
+            <span class="hud-stat-value" id="hudWs">1 / 4</span>
+          </div>
+          <div class="hud-stat">
+            <span class="hud-stat-label">WINDOWS</span>
+            <span class="hud-stat-value" id="hudWins">0</span>
+          </div>
+          <div class="hud-stat">
+            <span class="hud-stat-label">THEME</span>
+            <span class="hud-stat-value" id="hudTheme">Dracula</span>
           </div>
         </div>
 
-        <div class="welcome-panels">
-          <div class="welcome-tile" data-action="environments">
-            <div class="tile-icon">◆</div>
+        <div class="hud-hint">
+          <kbd>Super</kbd><kbd>H</kbd><span>for all shortcuts</span>
+        </div>
+      </section>
+
+      <section class="pinned-cluster">
+        <button class="pinned-tile" data-action="environments">
+          <span class="pin-glyph">◆</span>
+          <span class="pin-body">
             <strong>Environments</strong>
-            <small>Guided labs, isolated and resettable</small>
-          </div>
-          <div class="welcome-tile" data-action="apps">
-            <div class="tile-icon">▲</div>
+            <small>Guided labs</small>
+          </span>
+          <span class="pin-key"><kbd>N</kbd></span>
+        </button>
+
+        <button class="pinned-tile" data-action="apps">
+          <span class="pin-glyph">▲</span>
+          <span class="pin-body">
             <strong>Applications</strong>
-            <small>Launcher, terminals, notes</small>
-          </div>
-          <div class="welcome-tile" data-action="settings">
-            <div class="tile-icon">●</div>
+            <small>Launcher</small>
+          </span>
+          <span class="pin-key"><kbd>D</kbd></span>
+        </button>
+
+        <button class="pinned-tile" data-action="terminal">
+          <span class="pin-glyph">❯_</span>
+          <span class="pin-body">
+            <strong>Terminal</strong>
+            <small>Shell</small>
+          </span>
+          <span class="pin-key"><kbd>K</kbd></span>
+        </button>
+
+        <button class="pinned-tile" data-action="settings">
+          <span class="pin-glyph">⚙</span>
+          <span class="pin-body">
             <strong>Settings</strong>
-            <small>Theme, shortcuts, workspace</small>
-          </div>
-          <div class="welcome-tile muted-tile">
-            <div class="tile-icon">✦</div>
-            <strong>Workspaces</strong>
-            <small>Ready ·</small>
-          </div>
-        </div>
+            <small>Preferences</small>
+          </span>
+          <span class="pin-key"><kbd>S</kbd></span>
+        </button>
       </section>
     </main>
 
     <div id="windowLayer"></div>
+    <div id="dock" class="dock" aria-label="Application dock">
+      <div class="dock-items" id="dockItems"></div>
+      <div class="dock-sep" id="dockSepDynamic" style="display: none"></div>
+      <div class="dock-items" id="dockDynamic" style="display: none"></div>
+      <div class="dock-sep"></div>
+      <button
+        class="dock-item dock-show-apps"
+        data-action="apps"
+        title="Show Applications"
+      >
+        <span class="dock-icon">⊞</span>
+      </button>
+    </div>
     <div id="shortcuts" class="overlay-panel hidden">
       <div class="launcher-box">
         <div class="launcher-header">
@@ -176,10 +212,11 @@
         sync();
       })();
     </script>
-    <script src="js/terminal.js"></script>
     <script src="js/window-manager.js"></script>
+    <script src="js/desktop.js"></script>
+    <script src="js/terminal.js"></script>
     <script src="js/shortcuts.js"></script>
     <script src="js/environments.js"></script>
-    <script src="js/desktop.js"></script>
+    <script src="js/dock.js"></script>
   </body>
 </html>

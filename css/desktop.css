@@ -126,144 +126,224 @@ button {
 }
 
 /* ---------- welcome-card: split hero ---------- */
+/* ============================================================
+   WELCOME HUD — top-left system status card
+   ============================================================ */
+
 .welcome-card {
   position: absolute;
-  inset: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-  align-items: center;
-  gap: 48px;
-  padding: 0 clamp(24px, 6vw, 96px);
-  animation: fadein 0.5s ease;
-}
-.welcome-card::before {
-  /* thin vertical rule between the two columns */
-  content: "";
-  position: absolute;
-  top: 20%;
-  bottom: 20%;
-  left: calc(clamp(24px, 6vw, 96px) + 52%);
-  width: 1px;
-  background: linear-gradient(180deg, transparent, var(--line2), transparent);
-  pointer-events: none;
+  left: 28px;
+  top: 28px;
+  width: 300px;
+  padding: 18px 18px 14px;
+  background: color-mix(in srgb, var(--panel) 72%, transparent);
+  border: 1px solid var(--line2);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px);
+  animation: fadein 0.35s ease;
+  user-select: none;
 }
 
-.welcome-intro {
-  max-width: 520px;
-}
-.welcome-intro .eyebrow {
+.hud-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 14px;
 }
-.welcome-intro h1 {
-  font-size: clamp(30px, 4.4vw, 54px);
-  line-height: 1.02;
-  letter-spacing: -0.045em;
-  margin: 0 0 14px;
+.hud-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
-.welcome-intro p {
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.6;
-  margin: 0 0 26px;
-  max-width: 44ch;
-}
-.welcome-intro .quick-shortcuts {
-  margin-top: 6px;
-}
-
-/* ---------- right column: tile grid ---------- */
-.welcome-panels {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  max-width: 520px;
-  width: 100%;
-  justify-self: end;
-}
-.welcome-tile {
-  position: relative;
-  padding: 16px 16px 18px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.02);
-  cursor: pointer;
-  transition:
-    border-color 0.14s ease,
-    background 0.14s ease,
-    transform 0.14s ease;
-  overflow: hidden;
-}
-.welcome-tile::after {
-  /* subtle corner accent */
-  content: "";
-  position: absolute;
-  right: -30px;
-  top: -30px;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-  filter: blur(6px);
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-.welcome-tile:hover {
-  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
-  background: color-mix(in srgb, var(--accent) 5%, transparent);
-  transform: translateY(-1px);
-}
-.welcome-tile:hover::after {
-  opacity: 1;
-}
-
-.welcome-tile .tile-icon {
+.hud-mark {
   font-size: 14px;
   color: var(--accent);
-  margin-bottom: 12px;
-  display: block;
-  line-height: 1;
 }
-.welcome-tile strong {
-  display: block;
-  font-size: 13px;
-  letter-spacing: -0.01em;
-  margin-bottom: 4px;
+.hud-name {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
 }
-.welcome-tile small {
-  display: block;
-  font-size: 10.5px;
+.hud-version {
+  font-size: 9px;
+  letter-spacing: 0.12em;
   color: var(--muted);
-  line-height: 1.45;
-}
-.muted-tile {
-  cursor: default;
-  opacity: 0.7;
-}
-.muted-tile:hover {
-  border-color: var(--line);
-  background: rgba(255, 255, 255, 0.02);
-  transform: none;
-}
-.muted-tile:hover::after {
-  opacity: 0;
+  text-transform: uppercase;
 }
 
-/* ---------- responsive ---------- */
-@media (max-width: 900px) {
+.hud-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 11px;
+  color: var(--text);
+}
+.hud-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ok);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--ok) 60%, transparent);
+  flex: 0 0 6px;
+  animation: hudPulse 2.4s ease infinite;
+}
+@keyframes hudPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.hud-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.hud-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: center;
+}
+.hud-stat-label {
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  font-weight: 800;
+}
+.hud-stat-value {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.hud-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  font-size: 10px;
+  color: var(--muted);
+  justify-content: center;
+}
+
+/* ============================================================
+   PINNED CLUSTER — bottom-left launcher grid
+   ============================================================ */
+
+.pinned-cluster {
+  position: absolute;
+  left: 28px;
+  bottom: 28px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  width: 300px;
+  animation: fadein 0.4s ease;
+}
+
+.pinned-tile {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: color-mix(in srgb, var(--panel) 62%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 0.14s ease,
+    border-color 0.14s ease,
+    transform 0.14s ease;
+  backdrop-filter: blur(10px);
+}
+.pinned-tile:hover {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 38%, transparent);
+  transform: translateX(2px);
+}
+.pinned-tile:active {
+  transform: translateX(2px) scale(0.99);
+}
+
+.pin-glyph {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: var(--accent);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.pin-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.pin-body strong {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.pin-body small {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.pin-key {
+  display: inline-flex;
+  gap: 3px;
+  opacity: 0.55;
+  transition: opacity 0.14s ease;
+}
+.pinned-tile:hover .pin-key {
+  opacity: 1;
+}
+.pin-key kbd {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 9px;
+  padding: 2px 5px;
+  border: 1px solid var(--line2);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--accent2);
+  min-width: 16px;
+  text-align: center;
+}
+
+/* Responsive: collapse HUD and cluster to a stack */
+@media (max-width: 800px) {
   .welcome-card {
-    grid-template-columns: 1fr;
-    align-items: flex-start;
-    gap: 26px;
-    padding: 36px 22px;
-    position: static;
-    inset: auto;
+    left: 16px;
+    top: 16px;
+    width: calc(100% - 32px);
   }
-  .welcome-card::before {
-    display: none;
-  }
-  .welcome-panels {
-    justify-self: stretch;
-    max-width: none;
+  .pinned-cluster {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    width: auto;
   }
 }
 @media (max-width: 520px) {
