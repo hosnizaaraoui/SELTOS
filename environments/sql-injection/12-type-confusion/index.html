@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>SQLi Lab 12 — Type Confusion</title>
+    <script>
+      (function () {
+        var t = new URLSearchParams(location.search).get("theme");
+        if (t) document.documentElement.dataset.theme = t;
+      })();
+    </script>
+    <link rel="stylesheet" href="../../../css/theme.css" />
+    <link rel="stylesheet" href="../../../css/components.css" />
+    <link rel="stylesheet" href="../../../css/labs.css" />
+  </head>
+  <body>
+    <div class="lab-page">
+      <div class="lab-brand">
+        <strong>SQL INJECTION / LAB 12</strong
+        ><span>Type Confusion / Implicit Casting</span>
+      </div>
+      <div class="lab-container">
+        <h1>Type Confusion &amp; Implicit Casting</h1>
+        <p class="lead">
+          A field "looks numeric" because the column is numeric — so a validator
+          only checks that. But the database engine happily coerces strings, hex
+          literals, and scientific notation to numbers. Every one of those is a
+          bypass a "just cast to int" fix misses.
+        </p>
+
+        <div class="lab-card">
+          <div class="eyebrow">AGE-GATED CONTENT</div>
+          <p class="muted">
+            Older articles require the visitor to be at least the article's
+            <code>min_age</code>.
+          </p>
+          <label>Your age</label>
+          <input id="age" class="lab-input" value="17" autocomplete="off" />
+          <button id="run" class="lab-btn">VIEW</button>
+          <div id="output"></div>
+        </div>
+
+        <div class="lab-card">
+          <div class="eyebrow">CHALLENGES</div>
+          <div class="challenge">
+            <strong>01 — Bypass with a non-numeric string</strong
+            ><small
+              >MySQL casts <code>'abc'</code> to <code>0</code>. Age gate falls
+              open.</small
+            >
+          </div>
+          <div class="challenge">
+            <strong>02 — Bypass a naive <code>is_numeric()</code></strong
+            ><small
+              >Hex literals (<code>0x3138</code>) and scientific notation
+              (<code>1e3</code>) parse as integers in MySQL. Neither is
+              "numeric" to a string-only check.</small
+            >
+          </div>
+          <div class="challenge">
+            <strong>03 — Force the WHERE clause true</strong
+            ><small
+              >Classic <code>0 OR 1=1</code>, but now you understand why the
+              coercion is what makes <code>0</code> safe to inject next
+              to.</small
+            >
+          </div>
+          <details class="lab-solutions">
+            <summary>View solutions</summary>
+
+            <div class="solution">
+              <strong>01 — Non-numeric string</strong>
+              <pre><code>Your age: abc</code></pre>
+              <p class="muted" style="margin: 8px 0 0">
+                Coerced to 0, so <code>min_age &lt;= 0</code> matches
+                everything.
+              </p>
+            </div>
+
+            <div class="solution">
+              <strong>02 — Hex and scientific notation</strong>
+              <pre><code>Your age: 0x3138</code></pre>
+              <pre><code>Your age: 1e3</code></pre>
+              <p class="muted" style="margin: 8px 0 0">
+                Both pass a naive <code>/^\d+$/</code> regex if it doesn't
+                account for these. <code>0x3138</code> is hex for 18;
+                <code>1e3</code> is 1000.
+              </p>
+            </div>
+
+            <div class="solution">
+              <strong>03 — Boolean tail</strong>
+              <pre><code>Your age: 0 OR 1=1</code></pre>
+            </div>
+          </details>
+          <button id="reset" class="lab-btn secondary">RESET</button>
+        </div>
+
+        <script src="script.js"></script>
+      </div>
+    </div>
+  </body>
+</html>

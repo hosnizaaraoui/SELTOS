@@ -8,7 +8,15 @@ window.ENVIRONMENTS = [
       { name: "Authentication Bypass", description: "Explore how input can alter a login query.", path: "environments/sql-injection/01-authentication/index.html" },
       { name: "Product Search", description: "Explore boolean logic and data exposure.", path: "environments/sql-injection/02-product-search/index.html" },
       { name: "Data Exfiltration", description: "Leak hidden columns using UNION SELECT.", path: "environments/sql-injection/03-data-exfiltration/index.html" },
-      { name: "Order By Injection", description: "Abuse an unquoted ORDER BY clause to leak and sort hidden data.", path: "environments/sql-injection/04-order-by-injection/index.html" }
+      { name: "Order By Injection", description: "Abuse an unquoted ORDER BY clause to leak and sort hidden data.", path: "environments/sql-injection/04-order-by-injection/index.html" },
+      { name: "Blind Boolean-Based Injection", description: "Extract data one yes/no question at a time from a response with no visible output.", path: "environments/sql-injection/05-blind-boolean/index.html" },
+      { name: "Numeric Injection (No Quotes)", description: "Exploit a numeric parameter where quote-escaping defenses don't apply.", path: "environments/sql-injection/06-numeric-no-quotes/index.html" },
+      { name: "Second-Order Injection", description: "Store a payload now, detonate it in a different query later.", path: "environments/sql-injection/07-second-order/index.html" },
+      { name: "Stacked Queries", description: "Turn a read-only injection into writes, updates, and drops.", path: "environments/sql-injection/08-stacked-queries/index.html" },
+      { name: "Out-of-Band Exfiltration", description: "Leak secrets through a simulated DNS channel when no response signal exists.", path: "environments/sql-injection/09-out-of-band/index.html" },
+      { name: "ORDER BY Expression", description: "Blind-extract data using only the observable sort order.", path: "environments/sql-injection/10-order-by-expression/index.html" },
+      { name: "WAF Bypass", description: "Defeat a naive blacklist filter using comments, case, and alternate operators.", path: "environments/sql-injection/11-waf-bypass/index.html" },
+      { name: "Type Confusion", description: "Bypass numeric validation using strings, hex literals, and scientific notation.", path: "environments/sql-injection/12-type-confusion/index.html" }
     ]
   },
   {

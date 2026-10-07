@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>SQLi Lab 06 — Numeric Injection (No Quotes)</title>
+    <script>
+      (function () {
+        var t = new URLSearchParams(location.search).get("theme");
+        if (t) document.documentElement.dataset.theme = t;
+      })();
+    </script>
+    <link rel="stylesheet" href="../../../css/theme.css" />
+    <link rel="stylesheet" href="../../../css/components.css" />
+    <link rel="stylesheet" href="../../../css/labs.css" />
+  </head>
+  <body>
+    <div class="lab-page">
+      <div class="lab-brand">
+        <strong>SQL INJECTION / LAB 06</strong
+        ><span>Numeric Injection — No Quotes Needed</span>
+      </div>
+      <div class="lab-container">
+        <h1>Numeric Injection — No Quotes Needed</h1>
+        <p class="lead">
+          This internal finance tool builds its query from a numeric invoice ID
+          with no surrounding quotes, because "it's just a number." A defense
+          that only escapes quote characters does nothing here — there are none
+          to escape.
+        </p>
+
+        <div class="lab-card">
+          <div class="eyebrow">INVOICE LOOKUP</div>
+          <label>Invoice ID (numeric)</label>
+          <input id="iid" class="lab-input" value="101" autocomplete="off" />
+          <button id="lookup" class="lab-btn">LOOKUP</button>
+          <div id="output"></div>
+        </div>
+
+        <div class="lab-card">
+          <div class="eyebrow">CHALLENGES</div>
+          <div class="challenge">
+            <strong>01 — Bypass the ID check entirely</strong
+            ><small
+              >Return every invoice without knowing a single valid ID.</small
+            >
+          </div>
+          <div class="challenge">
+            <strong>02 — Find the column count</strong
+            ><small
+              >Prepare for a UNION attack the same way you would with a string
+              field.</small
+            >
+          </div>
+          <div class="challenge">
+            <strong>03 — Pivot to payment data</strong
+            ><small
+              >The <code>payment_methods</code> table isn't linked anywhere in
+              this UI. Reach it anyway.</small
+            >
+          </div>
+          <details class="lab-solutions">
+            <summary>View solutions</summary>
+
+            <div class="solution">
+              <strong>01 — Always-true, no quotes</strong>
+              <small
+                >A bare OR clause works just as well without string
+                delimiters.</small
+              >
+              <pre><code>Invoice ID: 0 OR 1=1</code></pre>
+            </div>
+
+            <div class="solution">
+              <strong>02 — Discover the column count</strong>
+              <small
+                >Three columns are selected: invoice_no, amount,
+                customer.</small
+              >
+              <pre><code>Invoice ID: 0 UNION SELECT 1,2,3</code></pre>
+            </div>
+
+            <div class="solution">
+              <strong>03 — Leak stored card data</strong>
+              <small
+                >Match the column count against a table nobody meant to
+                expose.</small
+              >
+              <pre><code>Invoice ID: 0 UNION SELECT card_number, cvv, owner FROM payment_methods</code></pre>
+              <p class="muted" style="margin: 8px 0 0">
+                Stripping or escaping quote characters — a very common "fix" —
+                would not have stopped any of this, because the payload never
+                used one.
+              </p>
+            </div>
+          </details>
+          <button id="reset" class="lab-btn secondary">RESET</button>
+        </div>
+
+        <script src="script.js"></script>
+      </div>
+    </div>
+  </body>
+</html>

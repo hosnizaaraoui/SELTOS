@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>SQLi Lab 05 — Blind Boolean-Based Injection</title>
+    <script>
+      (function () {
+        var t = new URLSearchParams(location.search).get("theme");
+        if (t) document.documentElement.dataset.theme = t;
+      })();
+    </script>
+    <link rel="stylesheet" href="../../../css/theme.css" />
+    <link rel="stylesheet" href="../../../css/components.css" />
+    <link rel="stylesheet" href="../../../css/labs.css" />
+  </head>
+  <body>
+    <div class="lab-page">
+      <div class="lab-brand">
+        <strong>SQL INJECTION / LAB 05</strong
+        ><span>Blind Boolean-Based Injection</span>
+      </div>
+      <div class="lab-container">
+        <h1>Blind Boolean-Based Injection</h1>
+        <p class="lead">
+          This reset-code checker never shows you any data — just a VALID or
+          INVALID badge. Real attackers don't need data in the response to steal
+          it: they need a yes/no question. Watch how far one bit of signal goes.
+        </p>
+
+        <div class="lab-card">
+          <div class="eyebrow">RESET CODE CHECK</div>
+          <p class="muted">
+            The server only ever answers VALID or INVALID. It never returns a
+            row.
+          </p>
+          <label>Reset code</label>
+          <input
+            id="code"
+            class="lab-input"
+            value=""
+            placeholder="enter a code"
+            autocomplete="off"
+          />
+          <button id="verify" class="lab-btn">VERIFY</button>
+          <div id="output"></div>
+        </div>
+
+        <div class="lab-card">
+          <div class="eyebrow">CHALLENGES</div>
+          <div class="challenge">
+            <strong>01 — Force a VALID result</strong
+            ><small
+              >Prove you can flip the oracle's answer without knowing the real
+              code.</small
+            >
+          </div>
+          <div class="challenge">
+            <strong>02 — Confirm a guessed admin password</strong
+            ><small
+              >Turn the VALID/INVALID oracle into a yes/no test against the
+              <code>accounts</code> table — the admin's password is
+              <code>R00t!Pass</code>, but pretend you don't know that and verify
+              it blind.</small
+            >
+          </div>
+          <div class="challenge">
+            <strong>03 — Binary-search a hidden number</strong
+            ><small
+              >Without ever seeing it, narrow down the admin's 6-digit
+              <code>mfa_secret</code> using greater-than / less-than
+              questions.</small
+            >
+          </div>
+          <details class="lab-solutions">
+            <summary>View solutions</summary>
+
+            <div class="solution">
+              <strong>01 — Force VALID</strong>
+              <small
+                >A classic always-true tail turns any input into a match.</small
+              >
+              <pre><code>Reset code: ' OR '1'='1</code></pre>
+              <p class="muted" style="margin: 8px 0 0">
+                Confirms the input reaches the query logic at all — step one of
+                any blind attack.
+              </p>
+            </div>
+
+            <div class="solution">
+              <strong>02 — Blind password confirmation</strong>
+              <small
+                >UNION in a second condition; VALID means the guess was
+                right.</small
+              >
+              <pre><code>Reset code: x' UNION SELECT 1 FROM accounts WHERE email='admin@corp.com' AND password='R00t!Pass' --</code></pre>
+              <p class="muted" style="margin: 8px 0 0">
+                Change the password guess and the badge flips to INVALID. In a
+                real attack this single query gets retried automatically,
+                thousands of times, by a script — not typed by hand.
+              </p>
+            </div>
+
+            <div class="solution">
+              <strong>03 — Binary search via inequality</strong>
+              <small
+                >No data ever appears, yet the secret's value still leaks, one
+                comparison at a time.</small
+              >
+              <pre><code>Reset code: x' UNION SELECT 1 FROM accounts WHERE email='admin@corp.com' AND mfa_secret > 200000 --</code></pre>
+              <p class="muted" style="margin: 8px 0 0">
+                VALID tells you the secret is above 200000. Keep halving the
+                range (try 300000, then 250000, and so on) and you converge on
+                the exact 6-digit code in under 20 questions — the same
+                technique real blind-SQLi tooling automates.
+              </p>
+            </div>
+          </details>
+          <button id="reset" class="lab-btn secondary">RESET</button>
+        </div>
+
+        <script src="script.js"></script>
+      </div>
+    </div>
+  </body>
+</html>

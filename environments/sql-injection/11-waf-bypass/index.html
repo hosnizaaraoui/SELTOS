@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>SQLi Lab 11 — WAF Bypass</title>
+    <script>
+      (function () {
+        var t = new URLSearchParams(location.search).get("theme");
+        if (t) document.documentElement.dataset.theme = t;
+      })();
+    </script>
+    <link rel="stylesheet" href="../../../css/theme.css" />
+    <link rel="stylesheet" href="../../../css/components.css" />
+    <link rel="stylesheet" href="../../../css/labs.css" />
+  </head>
+  <body>
+    <div class="lab-page">
+      <div class="lab-brand">
+        <strong>SQL INJECTION / LAB 11</strong><span>WAF Bypass</span>
+      </div>
+      <div class="lab-container">
+        <h1>WAF Bypass</h1>
+        <p class="lead">
+          A naive blacklist WAF sits between you and the SQL engine. It strips
+          <code>UNION</code>, <code>SELECT</code>, <code>OR&nbsp;</code>, and
+          <code>--</code>. Every one of those has a documented bypass — because
+          blacklists have to enumerate everything, and attackers only need one
+          thing the list forgot.
+        </p>
+
+        <div class="lab-card">
+          <div class="eyebrow">PRODUCT SEARCH (BEHIND WAF)</div>
+          <label>Search term</label>
+          <input id="q" class="lab-input" value="keyboard" autocomplete="off" />
+          <button id="go" class="lab-btn">SEARCH</button>
+          <div id="filtered"></div>
+          <div id="output"></div>
+        </div>
+
+        <div class="lab-card">
+          <div class="eyebrow">CHALLENGES</div>
+          <div class="challenge">
+            <strong>01 — Bypass the UNION filter</strong
+            ><small>Get a UNION SELECT through with inline comments.</small>
+          </div>
+          <div class="challenge">
+            <strong>02 — Bypass the comment filter</strong
+            ><small
+              >You can't write <code>--</code>. Find another way to end the
+              query.</small
+            >
+          </div>
+          <div class="challenge">
+            <strong>03 — Bypass the OR filter</strong
+            ><small
+              >Force the WHERE clause to be true without writing the letters O-R
+              followed by whitespace.</small
+            >
+          </div>
+          <details class="lab-solutions">
+            <summary>View solutions</summary>
+
+            <div class="solution">
+              <strong>01 — Inline comments split keywords</strong>
+              <pre><code>q: x' UN/**/ION SEL/**/ECT 1,2,3 --</code></pre>
+              <p class="muted" style="margin: 8px 0 0">
+                The WAF strips the literal substrings <code>UNION</code> and
+                <code>SELECT</code>. Adding a comment inside the keyword defeats
+                a single-pass string replacement.
+              </p>
+            </div>
+
+            <div class="solution">
+              <strong>02 — <code>#</code> instead of <code>--</code></strong>
+              <pre><code>q: x' UN/**/ION SEL/**/ECT 1,2,3 #</code></pre>
+            </div>
+
+            <div class="solution">
+              <strong>03 — <code>||</code> as logical OR</strong>
+              <pre><code>q: ' || '1'='1</code></pre>
+              <p class="muted" style="margin: 8px 0 0">
+                The filter only catches <code>OR </code> — it doesn't know
+                <code>||</code> is also a logical operator in MySQL (and a
+                string concatenation operator in most others). This is why real
+                WAFs work on parsed tokens, not raw strings.
+              </p>
+            </div>
+          </details>
+          <button id="reset" class="lab-btn secondary">RESET</button>
+        </div>
+
+        <script src="script.js"></script>
+      </div>
+    </div>
+  </body>
+</html>

