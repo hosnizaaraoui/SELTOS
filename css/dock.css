@@ -108,6 +108,7 @@
 .dock[data-position="right"] .dock-items {
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
 }
 
 /* ---- SIZE: auto (default) ---- */
@@ -195,7 +196,7 @@ body.overlay-open .dock[data-position="right"] {
   height: 40px;
   padding: 0;
   border: 0;
-  background: transparent;
+  background: var(--panel2);
   border-radius: 12px;
   cursor: pointer;
 

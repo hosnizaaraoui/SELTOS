@@ -57,10 +57,7 @@ function analyse(html) {
   return { found, injected: all.length > 2 }; // template itself has h2 + p
 }
 
-/* ---------- search: the server-side "query" ----------
-   In the real lab this would be a request to /search?q=...
-   Here we simulate that request locally, then echo the term back into the
-   results page — which is what makes the reflection exploitable. */
+/* ---------- search: the server-side "query" ---------- */
 function search(q) {
   const needle = q.toLowerCase();
   return DB.products.filter(p =>
@@ -82,7 +79,10 @@ document.getElementById("search").onclick = async () => {
     ? "<ul>" + hits.map(p => "<li>" + esc(p.name) + " — $" + esc(String(p.price)) + "</li>").join("") + "</ul>"
     : "<p>No products found.</p>";
 
+  // This is the page the "server" would return. When encoding is off, the raw
+  // user input is concatenated in — the classic reflected-XSS sink.
   const page = "<h2>Results for: " + out + "</h2>" + resultsHtml;
+
   const a = analyse(page);
 
   let html = '<div class="query-box">' +
@@ -98,11 +98,22 @@ document.getElementById("search").onclick = async () => {
   else
     html += "<p><b>No injection:</b> the input is rendered as text.</p>";
 
-  html += '<p class="muted">Inert preview (sandboxed, scripts disabled):</p>' +
-    '<iframe sandbox="" style="width:100%;height:120px;border:1px solid #444;background:#fff;color:#000" srcdoc="' +
-    esc(page) + '"></iframe>';
+  /* ---------- live target ----------
+     WARNING: this iframe is intentionally same-origin with the lab (no sandbox).
+     Payloads you type run for real, with this page's origin, and can touch the
+     parent lab DOM and its cookies. That is the point of the lab — do not add
+     this pattern to any page that accepts input from someone else. */
+  html += '<p class="muted">Live target (payloads execute here):</p>' +
+    '<iframe id="target" style="width:100%;height:200px;border:1px solid #444;background:#fff;color:#000"></iframe>';
 
   document.getElementById("output").innerHTML = html;
+
+  // Write the reflected page into the target iframe so <script> tags run.
+  const target = document.getElementById("target");
+  const doc = target.contentDocument;
+  doc.open();
+  doc.write(page);
+  doc.close();
 };
 
 document.getElementById("reset").onclick = () => {

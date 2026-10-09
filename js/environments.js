@@ -20,24 +20,24 @@ window.ENVIRONMENTS = [
 
     ]
   },
-  {
-    category: "Cybersecurity",
-    name: "Access Control",
-    icon: "⛨",
-    description: "Broken authorization and object-level access flaws.",
-    labs: [
-      { name: "Invoice Portal (IDOR)", description: "Enumerate object IDs the server forgot to authorize.", path: "environments/access-control/01-idor/index.html" }
-    ]
-  },
-  {
-    category: "Cybersecurity",
-    name: "Cross-Site Scripting",
-    icon: "‹/›",
-    description: "Injection into the browser: markup, handlers and encoding.",
-    labs: [
-      { name: "Reflected Search", description: "Turn a reflected search term into script execution, then fix it.", path: "environments/xss/01-reflected/index.html" }
-    ]
-  },
+  // {
+  //   category: "Cybersecurity",
+  //   name: "Access Control",
+  //   icon: "⛨",
+  //   description: "Broken authorization and object-level access flaws.",
+  //   labs: [
+  //     { name: "Invoice Portal (IDOR)", description: "Enumerate object IDs the server forgot to authorize.", path: "environments/access-control/01-idor/index.html" }
+  //   ]
+  // },
+  // {
+  //   category: "Cybersecurity",
+  //   name: "Cross-Site Scripting",
+  //   icon: "‹/›",
+  //   description: "Injection into the browser: markup, handlers and encoding.",
+  //   labs: [
+  //     { name: "Reflected Search", description: "Turn a reflected search term into script execution, then fix it.", path: "environments/xss/01-reflected/index.html" }
+  //   ]
+  // },
 
 ];
 
