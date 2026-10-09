@@ -1,0 +1,5 @@
+[
+  { "id": 1, "name": "admin", "password": "S3cret!Adm", "role": "admin" },
+  { "id": 2, "name": "alice", "password": "alice123", "role": "user" },
+  { "id": 3, "name": "bob", "password": "bob2024", "role": "user" }
+]

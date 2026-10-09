@@ -1,13 +1,45 @@
-const DB = {
-    codes: [
-        { id: 1, code: "7F2K9Q", used: 0 }
-    ],
-    accounts: [
-        { id: 1, email: "admin@corp.com", password: "R00t!Pass", mfa_secret: 219431, is_admin: 1 },
-        { id: 2, email: "alice@corp.com", password: "alice123", mfa_secret: 118822, is_admin: 0 },
-        { id: 3, email: "bob@corp.com", password: "bob2024", mfa_secret: 554010, is_admin: 0 }
-    ]
+/* ---------- data: fetched from shared mock JSON (see ../../mock/) ----------
+   Each table can be re-pointed with a query parameter named after the file's
+   basename, e.g. ?codes=../../mock/codes.json  (relative or absolute URL). */
+const MOCK = {
+  codes: "../../mock/codes.json",
+  accounts: "../../mock/accounts.json"
 };
+
+let DB = null;
+let DB_LOADING = null;
+
+async function fetchTable(defaultPath) {
+  const key = defaultPath.split("/").pop().replace(/\.json$/i, "").toLowerCase();
+  const override = new URLSearchParams(location.search).get(key);
+  const src = new URL(override || defaultPath, location.href).toString();
+  const res = await fetch(src, { cache: "no-store" });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  const rows = await res.json();
+  if (!Array.isArray(rows)) throw new Error("expected a JSON array");
+  return rows;
+}
+
+function getDB() {
+  if (DB) return Promise.resolve(DB);
+  if (!DB_LOADING) {
+    DB_LOADING = Promise.all(Object.values(MOCK).map(fetchTable)).then(all => {
+      const db = {};
+      Object.keys(MOCK).forEach((t, i) => { db[t] = all[i]; });
+      DB = db;
+      return DB;
+    }, err => { DB_LOADING = null; throw err; });
+  }
+  return DB_LOADING;
+}
+
+async function ready(outId) {
+  try { await getDB(); return true; }
+  catch (e) {
+    document.getElementById(outId).innerHTML = '<p class="result-bad">Failed to load data</p>';
+    return false;
+  }
+}
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"
@@ -200,7 +232,8 @@ function build(parts) {
     };
 }
 
-document.getElementById("verify").onclick = () => {
+document.getElementById("verify").onclick = async () => {
+    if (!(await ready("output"))) return;
     const v = document.getElementById("code").value;
     const b = build([
         "SELECT 1 FROM codes WHERE code = '", { v: v },
@@ -222,4 +255,11 @@ document.getElementById("verify").onclick = () => {
 document.getElementById("reset").onclick = () => {
     document.getElementById("code").value = "";
     document.getElementById("output").innerHTML = "";
+};
+
+/* ---------- open this lab in a full browser tab (keeps ?theme= and any overrides) ---------- */
+document.getElementById("open-browser").onclick = () => {
+  const url = new URL(location.href);
+  url.searchParams.set("theme", document.documentElement.dataset.theme || "dracula");
+  window.open(url.toString(), "_blank", "noopener");
 };

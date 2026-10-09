@@ -1,0 +1,4 @@
+[
+  { "id": 1, "card_number": "4111 1111 1111 1111", "cvv": "123", "owner": "Globex Finance" },
+  { "id": 2, "card_number": "5500 0000 0000 0004", "cvv": "456", "owner": "Initech AP" }
+]

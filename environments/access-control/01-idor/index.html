@@ -17,30 +17,72 @@
   <body>
     <div class="lab-page">
       <div class="lab-brand">
-        <strong>ACCESS CONTROL / LAB 01</strong><span>Invoice Portal</span>
+        <strong>ACCESS CONTROL / LAB 01</strong>
+        <div style="display: flex; align-items: center; gap: 14px">
+          <span>Invoice Portal</span>
+          <button
+            id="open-browser"
+            class="lab-btn secondary"
+            style="margin-top: 0; padding: 5px 10px"
+          >
+            Open in browser ↗
+          </button>
+        </div>
       </div>
       <div class="lab-container">
         <h1>Invoice Portal</h1>
-        <p class="lead">You are logged in as <b>alice</b>. The API checks that you are authenticated, but does it check that the invoice is yours?</p>
+        <p class="lead">
+          You are logged in as <b>alice</b>. The API checks that you are
+          authenticated, but does it check that the invoice is yours?
+        </p>
         <div class="lab-card">
           <div class="eyebrow">MY INVOICES</div>
           <p class="muted">Your invoices: <code>101</code>, <code>102</code></p>
           <label>Invoice ID</label>
           <input id="id" class="lab-input" value="101" autocomplete="off" />
-          <label><input type="checkbox" id="fix" /> Enable server-side ownership check (the fix)</label>
+          <label
+            ><input type="checkbox" id="fix" /> Enable server-side ownership
+            check (the fix)</label
+          >
           <button id="fetch" class="lab-btn">FETCH</button>
           <div id="output"></div>
         </div>
         <div class="lab-card">
           <div class="eyebrow">CHALLENGES</div>
-          <div class="challenge"><strong>01 — Read someone else's invoice</strong><small>Change the identifier in the request.</small></div>
-          <div class="challenge"><strong>02 — Find the admin invoice</strong><small>Identifiers are sequential. Enumerate them.</small></div>
-          <div class="challenge"><strong>03 — Apply the fix</strong><small>Enable the ownership check and repeat your attack.</small></div>
+          <div class="challenge">
+            <strong>01 — Read someone else's invoice</strong
+            ><small>Change the identifier in the request.</small>
+          </div>
+          <div class="challenge">
+            <strong>02 — Find the admin invoice</strong
+            ><small>Identifiers are sequential. Enumerate them.</small>
+          </div>
+          <div class="challenge">
+            <strong>03 — Apply the fix</strong
+            ><small>Enable the ownership check and repeat your attack.</small>
+          </div>
           <details class="lab-solutions">
             <summary>View solutions</summary>
-            <div class="solution"><strong>01 — Horizontal escalation</strong><pre><code>Invoice ID: 103</code></pre><p class="muted">The server returns bob's invoice because it never compares the owner to the session user.</p></div>
-            <div class="solution"><strong>02 — Enumeration</strong><pre><code>Invoice ID: 104</code></pre></div>
-            <div class="solution"><strong>03 — Fix</strong><p class="muted">Authorization must be checked on every object access: <code>invoice.owner === session.user</code>, otherwise return 403 (or 404 to avoid leaking existence).</p></div>
+            <div class="solution">
+              <strong>01 — Horizontal escalation</strong>
+              <pre><code>Invoice ID: 103</code></pre>
+              <p class="muted">
+                The server returns bob's invoice because it never compares the
+                owner to the session user.
+              </p>
+            </div>
+            <div class="solution">
+              <strong>02 — Enumeration</strong>
+              <pre><code>Invoice ID: 104</code></pre>
+            </div>
+            <div class="solution">
+              <strong>03 — Fix</strong>
+              <p class="muted">
+                Authorization must be checked on every object access:
+                <code>invoice.owner === session.user</code>, otherwise return
+                403 (or 404 to avoid leaking existence).
+              </p>
+            </div>
           </details>
           <button id="reset" class="lab-btn secondary">RESET</button>
         </div>

@@ -1,17 +1,45 @@
-const DB = {
-  products: [
-    { id: 1, name: "Keyboard", price: 25, public: 1 },
-    { id: 2, name: "Mouse", price: 12, public: 1 },
-    { id: 3, name: "Monitor", price: 140, public: 1 },
-    { id: 4, name: "USB Cable", price: 5, public: 1 },
-    { id: 5, name: "Prototype Secret", price: 9999, public: 0 }
-  ],
-  users: [
-    { id: 1, name: "admin", password: "S3cret!Adm", role: "admin" },
-    { id: 2, name: "alice", password: "alice123", role: "user" },
-    { id: 3, name: "bob", password: "bob2024", role: "user" }
-  ]
+/* ---------- data: fetched from shared mock JSON (see ../../mock/) ----------
+   Each table can be re-pointed with a query parameter named after the file's
+   basename, e.g. ?products=../../mock/products.json  (relative or absolute URL). */
+const MOCK = {
+  products: "../../mock/products.json",
+  users: "../../mock/users.json"
 };
+
+let DB = null;
+let DB_LOADING = null;
+
+async function fetchTable(defaultPath) {
+  const key = defaultPath.split("/").pop().replace(/\.json$/i, "").toLowerCase();
+  const override = new URLSearchParams(location.search).get(key);
+  const src = new URL(override || defaultPath, location.href).toString();
+  const res = await fetch(src, { cache: "no-store" });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  const rows = await res.json();
+  if (!Array.isArray(rows)) throw new Error("expected a JSON array");
+  return rows;
+}
+
+function getDB() {
+  if (DB) return Promise.resolve(DB);
+  if (!DB_LOADING) {
+    DB_LOADING = Promise.all(Object.values(MOCK).map(fetchTable)).then(all => {
+      const db = {};
+      Object.keys(MOCK).forEach((t, i) => { db[t] = all[i]; });
+      DB = db;
+      return DB;
+    }, err => { DB_LOADING = null; throw err; });
+  }
+  return DB_LOADING;
+}
+
+async function ready(outId) {
+  try { await getDB(); return true; }
+  catch (e) {
+    document.getElementById(outId).innerHTML = '<p class="result-bad">Failed to load data</p>';
+    return false;
+  }
+}
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"
@@ -214,7 +242,8 @@ function renderTable(r) {
     "</table></div>";
 }
 
-document.getElementById("search").onclick = () => {
+document.getElementById("search").onclick = async () => {
+  if (!(await ready("output"))) return;
   const v = document.getElementById("q").value;
   if (!v) {
     document.getElementById("output").innerHTML =
@@ -247,4 +276,11 @@ document.getElementById("search").onclick = () => {
 document.getElementById("reset").onclick = () => {
   document.getElementById("q").value = "keyboard";
   document.getElementById("output").innerHTML = "";
+};
+
+/* ---------- open this lab in a full browser tab (keeps ?theme= and any overrides) ---------- */
+document.getElementById("open-browser").onclick = () => {
+  const url = new URL(location.href);
+  url.searchParams.set("theme", document.documentElement.dataset.theme || "dracula");
+  window.open(url.toString(), "_blank", "noopener");
 };

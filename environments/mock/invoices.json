@@ -1,0 +1,5 @@
+[
+  { "id": 101, "invoice_no": "INV-1001", "amount": 240, "customer": "Globex" },
+  { "id": 102, "invoice_no": "INV-1002", "amount": 95, "customer": "Initech" },
+  { "id": 103, "invoice_no": "INV-1003", "amount": 1800, "customer": "Umbrella Corp" }
+]

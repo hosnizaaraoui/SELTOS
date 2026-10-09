@@ -17,6 +17,7 @@ window.ENVIRONMENTS = [
       { name: "ORDER BY Expression", description: "Blind-extract data using only the observable sort order.", path: "environments/sql-injection/10-order-by-expression/index.html" },
       { name: "WAF Bypass", description: "Defeat a naive blacklist filter using comments, case, and alternate operators.", path: "environments/sql-injection/11-waf-bypass/index.html" },
       { name: "Type Confusion", description: "Bypass numeric validation using strings, hex literals, and scientific notation.", path: "environments/sql-injection/12-type-confusion/index.html" }
+
     ]
   },
   {
@@ -37,15 +38,7 @@ window.ENVIRONMENTS = [
       { name: "Reflected Search", description: "Turn a reflected search term into script execution, then fix it.", path: "environments/xss/01-reflected/index.html" }
     ]
   },
-  {
-    category: "Systems Administration",
-    name: "Linux",
-    icon: "$_",
-    description: "Hands-on Linux administration simulations.",
-    labs: [
-      { name: "File Permissions", description: "Predict access decisions and fix chmod misconfigurations.", path: "environments/linux/01-permissions/index.html" }
-    ]
-  }
+
 ];
 
 window.openEnvironments = function () {

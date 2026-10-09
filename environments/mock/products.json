@@ -1,0 +1,7 @@
+[
+  { "id": 1, "name": "Keyboard", "price": 25, "public": 1 },
+  { "id": 2, "name": "Mouse", "price": 12, "public": 1 },
+  { "id": 3, "name": "Monitor", "price": 140, "public": 1 },
+  { "id": 4, "name": "USB Cable", "price": 5, "public": 1 },
+  { "id": 5, "name": "Prototype Secret", "price": 9999, "public": 0 }
+]

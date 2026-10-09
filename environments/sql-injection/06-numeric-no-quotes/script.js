@@ -1,14 +1,45 @@
-const DB = {
-    invoices: [
-        { id: 101, invoice_no: "INV-1001", amount: 240, customer: "Globex" },
-        { id: 102, invoice_no: "INV-1002", amount: 95, customer: "Initech" },
-        { id: 103, invoice_no: "INV-1003", amount: 1800, customer: "Umbrella Corp" }
-    ],
-    payment_methods: [
-        { id: 1, card_number: "4111 1111 1111 1111", cvv: "123", owner: "Globex Finance" },
-        { id: 2, card_number: "5500 0000 0000 0004", cvv: "456", owner: "Initech AP" }
-    ]
+/* ---------- data: fetched from shared mock JSON (see ../../mock/) ----------
+   Each table can be re-pointed with a query parameter named after the file's
+   basename, e.g. ?invoices=../../mock/invoices.json  (relative or absolute URL). */
+const MOCK = {
+  invoices: "../../mock/invoices.json",
+  payment_methods: "../../mock/payment_methods.json"
 };
+
+let DB = null;
+let DB_LOADING = null;
+
+async function fetchTable(defaultPath) {
+  const key = defaultPath.split("/").pop().replace(/\.json$/i, "").toLowerCase();
+  const override = new URLSearchParams(location.search).get(key);
+  const src = new URL(override || defaultPath, location.href).toString();
+  const res = await fetch(src, { cache: "no-store" });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  const rows = await res.json();
+  if (!Array.isArray(rows)) throw new Error("expected a JSON array");
+  return rows;
+}
+
+function getDB() {
+  if (DB) return Promise.resolve(DB);
+  if (!DB_LOADING) {
+    DB_LOADING = Promise.all(Object.values(MOCK).map(fetchTable)).then(all => {
+      const db = {};
+      Object.keys(MOCK).forEach((t, i) => { db[t] = all[i]; });
+      DB = db;
+      return DB;
+    }, err => { DB_LOADING = null; throw err; });
+  }
+  return DB_LOADING;
+}
+
+async function ready(outId) {
+  try { await getDB(); return true; }
+  catch (e) {
+    document.getElementById(outId).innerHTML = '<p class="result-bad">Failed to load data</p>';
+    return false;
+  }
+}
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"
@@ -243,7 +274,8 @@ function renderImpact(head, rows) {
     );
 }
 
-document.getElementById("lookup").onclick = () => {
+document.getElementById("lookup").onclick = async () => {
+    if (!(await ready("output"))) return;
     const v = document.getElementById("iid").value;
     const b = build([
         "SELECT invoice_no, amount, customer FROM invoices WHERE id = ", { v: v }
@@ -265,4 +297,11 @@ document.getElementById("lookup").onclick = () => {
 document.getElementById("reset").onclick = () => {
     document.getElementById("iid").value = "101";
     document.getElementById("output").innerHTML = "";
+};
+
+/* ---------- open this lab in a full browser tab (keeps ?theme= and any overrides) ---------- */
+document.getElementById("open-browser").onclick = () => {
+  const url = new URL(location.href);
+  url.searchParams.set("theme", document.documentElement.dataset.theme || "dracula");
+  window.open(url.toString(), "_blank", "noopener");
 };

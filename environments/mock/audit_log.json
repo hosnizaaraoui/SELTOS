@@ -1,0 +1,4 @@
+[
+  { "id": 1, "event": "login", "who": "admin" },
+  { "id": 2, "event": "reset", "who": "alice" }
+]

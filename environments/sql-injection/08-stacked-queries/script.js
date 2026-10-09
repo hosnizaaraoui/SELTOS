@@ -1,22 +1,50 @@
 /* shared engine — same shape as Lab 07, plus a live state panel */
 
-const INITIAL_DB = {
-    users: [
-        { id: 1, name: "admin", password: "S3cret!Adm", role: "admin" },
-        { id: 2, name: "alice", password: "alice123", role: "user" },
-        { id: 3, name: "bob", password: "bob2024", role: "user" }
-    ],
-    subscribers: [
-        { id: 1, email: "alice@corp.com" },
-        { id: 2, email: "bob@corp.com" },
-        { id: 3, email: "carol@corp.com" }
-    ],
-    audit_log: [
-        { id: 1, event: "login", who: "admin" },
-        { id: 2, event: "reset", who: "alice" }
-    ]
+/* ---------- data: fetched from shared mock JSON (see ../../mock/) ----------
+   Each table can be re-pointed with a query parameter named after the file's
+   basename, e.g. ?users=../../mock/users.json  (relative or absolute URL). */
+const MOCK = {
+  users: "../../mock/users.json",
+  subscribers: "../../mock/subscribers.json",
+  audit_log: "../../mock/audit_log.json"
 };
-let DB = structuredClone(INITIAL_DB);
+
+let INITIAL_DB = null;
+let DB = null;
+let DB_LOADING = null;
+
+async function fetchTable(defaultPath) {
+  const key = defaultPath.split("/").pop().replace(/\.json$/i, "").toLowerCase();
+  const override = new URLSearchParams(location.search).get(key);
+  const src = new URL(override || defaultPath, location.href).toString();
+  const res = await fetch(src, { cache: "no-store" });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  const rows = await res.json();
+  if (!Array.isArray(rows)) throw new Error("expected a JSON array");
+  return rows;
+}
+
+function getDB() {
+  if (DB) return Promise.resolve(DB);
+  if (!DB_LOADING) {
+    DB_LOADING = Promise.all(Object.values(MOCK).map(fetchTable)).then(all => {
+      const db = {};
+      Object.keys(MOCK).forEach((t, i) => { db[t] = all[i]; });
+      INITIAL_DB = db;
+      DB = structuredClone(INITIAL_DB);
+      return DB;
+    }, err => { DB_LOADING = null; throw err; });
+  }
+  return DB_LOADING;
+}
+
+async function ready(outId) {
+  try { await getDB(); return true; }
+  catch (e) {
+    document.getElementById(outId).innerHTML = '<p class="result-bad">Failed to load data</p>';
+    return false;
+  }
+}
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
@@ -239,7 +267,8 @@ function renderState() {
     $("state").textContent = JSON.stringify(DB, null, 2);
 }
 
-$("run").onclick = () => {
+$("run").onclick = async () => {
+    if (!(await ready("output"))) return;
     const v = $("email").value;
     const b = build([
         "DELETE FROM subscribers WHERE email = '", { v: v }, "'"
@@ -260,11 +289,19 @@ $("run").onclick = () => {
     renderState();
 };
 
-$("reset").onclick = () => {
+$("reset").onclick = async () => {
+    if (!(await ready("output"))) return;
     DB = structuredClone(INITIAL_DB);
     $("email").value = "alice@corp.com";
     $("output").innerHTML = "";
     renderState();
 };
 
-renderState();
+getDB().then(renderState, () => { $("state").textContent = "Failed to load data"; });
+
+/* ---------- open this lab in a full browser tab (keeps ?theme= and any overrides) ---------- */
+document.getElementById("open-browser").onclick = () => {
+  const url = new URL(location.href);
+  url.searchParams.set("theme", document.documentElement.dataset.theme || "dracula");
+  window.open(url.toString(), "_blank", "noopener");
+};

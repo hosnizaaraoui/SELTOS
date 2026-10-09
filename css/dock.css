@@ -106,6 +106,7 @@
 /* Vertical dock: items stretch the other way */
 .dock[data-position="left"] .dock-items,
 .dock[data-position="right"] .dock-items {
+  display: flex;
   flex-direction: column;
 }
 

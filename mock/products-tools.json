@@ -1,0 +1,7 @@
+[
+  { "id": 1, "name": "Hammer", "category": "tools", "cost": 12 },
+  { "id": 2, "name": "Wrench", "category": "tools", "cost": 18 },
+  { "id": 3, "name": "Drill", "category": "tools", "cost": 95 },
+  { "id": 4, "name": "Apple", "category": "food", "cost": 1 },
+  { "id": 5, "name": "Bread", "category": "food", "cost": 3 }
+]

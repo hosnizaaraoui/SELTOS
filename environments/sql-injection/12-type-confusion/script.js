@@ -1,11 +1,44 @@
-const DB = {
-    articles: [
-        { id: 1, title: "Intro to Home Repair", min_age: 0, body: "Hammer safety tips." },
-        { id: 2, title: "Advanced Power Tools", min_age: 18, body: "The really dangerous stuff." },
-        { id: 3, title: "Industrial Welding", min_age: 21, body: "For trained professionals." },
-        { id: 4, title: "Dangerous Chemistry", min_age: 25, body: "Never try this at home." }
-    ]
+/* ---------- data: fetched from shared mock JSON (see ../../mock/) ----------
+   Each table can be re-pointed with a query parameter named after the file's
+   basename, e.g. ?articles=../../mock/articles.json  (relative or absolute URL). */
+const MOCK = {
+  articles: "../../mock/articles.json"
 };
+
+let DB = null;
+let DB_LOADING = null;
+
+async function fetchTable(defaultPath) {
+  const key = defaultPath.split("/").pop().replace(/\.json$/i, "").toLowerCase();
+  const override = new URLSearchParams(location.search).get(key);
+  const src = new URL(override || defaultPath, location.href).toString();
+  const res = await fetch(src, { cache: "no-store" });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  const rows = await res.json();
+  if (!Array.isArray(rows)) throw new Error("expected a JSON array");
+  return rows;
+}
+
+function getDB() {
+  if (DB) return Promise.resolve(DB);
+  if (!DB_LOADING) {
+    DB_LOADING = Promise.all(Object.values(MOCK).map(fetchTable)).then(all => {
+      const db = {};
+      Object.keys(MOCK).forEach((t, i) => { db[t] = all[i]; });
+      DB = db;
+      return DB;
+    }, err => { DB_LOADING = null; throw err; });
+  }
+  return DB_LOADING;
+}
+
+async function ready(outId) {
+  try { await getDB(); return true; }
+  catch (e) {
+    document.getElementById(outId).innerHTML = '<p class="result-bad">Failed to load data</p>';
+    return false;
+  }
+}
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
@@ -148,7 +181,8 @@ function renderTable(r) {
 
 const $ = id => document.getElementById(id);
 
-$("run").onclick = () => {
+$("run").onclick = async () => {
+    if (!(await ready("output"))) return;
     const v = $("age").value;
     const b = build([
         "SELECT title, min_age FROM articles WHERE min_age <= ", { v: v }
@@ -171,4 +205,11 @@ $("run").onclick = () => {
 $("reset").onclick = () => {
     $("age").value = "17";
     $("output").innerHTML = "";
+};
+
+/* ---------- open this lab in a full browser tab (keeps ?theme= and any overrides) ---------- */
+document.getElementById("open-browser").onclick = () => {
+  const url = new URL(location.href);
+  url.searchParams.set("theme", document.documentElement.dataset.theme || "dracula");
+  window.open(url.toString(), "_blank", "noopener");
 };
