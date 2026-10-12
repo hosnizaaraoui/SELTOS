@@ -10,6 +10,10 @@
         if (t) document.documentElement.dataset.theme = t;
       })();
     </script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
     <link rel="stylesheet" href="../../../css/theme.css" />
     <link rel="stylesheet" href="../../../css/components.css" />
     <link rel="stylesheet" href="../../../css/labs.css" />
@@ -17,89 +21,371 @@
   <body>
     <div class="lab-page">
       <div class="lab-brand">
-        <strong>SQL INJECTION / LAB 01</strong><div style="display: flex; align-items: center; gap: 14px">
+        <strong>SQL INJECTION / LAB 01</strong>
+        <div style="display: flex; align-items: center; gap: 14px">
           <span>AUTHENTICATION</span>
-          <button id="open-browser" class="lab-btn secondary" style="margin-top: 0; padding: 5px 10px">Open in browser ↗</button>
+          <button
+            id="open-browser"
+            class="lab-btn secondary"
+            style="margin-top: 0; padding: 5px 10px"
+          >
+            Open in browser ↗
+          </button>
         </div>
       </div>
-      <div class="lab-container">
-        <h1>Authentication Bypass</h1>
-        <p class="lead">
-          A deliberately vulnerable login simulation. Everything is local to
-          this page.
-        </p>
-        <div class="lab-card">
-          <div class="eyebrow">LOGIN PORTAL</div>
-          <label>Username</label
-          ><input
-            id="user"
-            class="lab-input"
-            value="alice"
-            autocomplete="off"
-          />
-          <label>Password</label
-          ><input
-            id="pass"
-            class="lab-input"
-            value="wrong"
-            autocomplete="off"
-          />
-          <button id="login" class="lab-btn">AUTHENTICATE</button>
-          <div id="output"></div>
+
+      <!-- TABS -->
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="assignment">
+          <i class="fas fa-tasks"></i> Assignment
+        </button>
+        <button class="tab-btn" data-tab="portal">
+          <i class="fas fa-sign-in-alt"></i> Portal
+        </button>
+        <button class="tab-btn" data-tab="takeaways">
+          <i class="fas fa-brain"></i> Key Takeaways
+        </button>
+      </div>
+
+      <!-- ASSIGNMENT TAB -->
+      <div id="tab-assignment" class="tab-panel active">
+        <div class="lab-container">
+          <h1>Authentication Bypass</h1>
+          <p class="lead">
+            A deliberately vulnerable login simulation. Everything is local to
+            this page.
+          </p>
+
+          <div class="lab-card">
+            <div class="eyebrow">CHALLENGES</div>
+            <div class="challenge">
+              <strong>01 — Gain access to the admin account</strong>
+              <small>Comment out the password check with a SQL comment.</small>
+              <div class="challenge-hint">
+                <i class="fas fa-arrow-right"></i> Try it in the
+                <b>Portal</b> tab. Watch the <b>SQL log</b> below to see how the
+                query changes.
+              </div>
+            </div>
+            <div class="challenge">
+              <strong>02 — Understand the query</strong>
+              <small>Compare the normal query with the manipulated one.</small>
+              <div class="challenge-hint">
+                <i class="fas fa-arrow-right"></i> Run a normal login first,
+                then the injection. Compare the two entries in the SQL log.
+              </div>
+            </div>
+
+            <details class="lab-solutions">
+              <summary>View solutions</summary>
+
+              <div class="solution">
+                <strong>01 — Bypass the password check</strong>
+                <small>Turn the rest of the query into a comment.</small>
+                <pre><code>Username: admin' --
+Password: (anything)</code></pre>
+                <p class="muted" style="margin: 8px 0 0">
+                  The <code>--</code> makes SQL ignore everything after it, so
+                  the password comparison is removed from the query.
+                </p>
+              </div>
+
+              <div class="solution">
+                <strong>02 — Alternative: force a true condition</strong>
+                <small>Make the WHERE clause always true.</small>
+                <pre><code>Username: ' OR 1=1 --
+Password: (anything)</code></pre>
+                <p class="muted" style="margin: 8px 0 0">
+                  The first row of the users table is returned — usually the
+                  admin.
+                </p>
+              </div>
+
+              <div class="solution">
+                <strong>03 — Trigger a real SQL error</strong>
+                <small
+                  >Break the syntax to see how errors leak structure.</small
+                >
+                <pre><code>Username: '
+Password: (anything)</code></pre>
+                <p class="muted" style="margin: 8px 0 0">
+                  The error reveals the shape of the query. In production this
+                  should never be shown to a user.
+                </p>
+              </div>
+            </details>
+
+            <button id="reset" class="lab-btn secondary">RESET</button>
+          </div>
         </div>
-        <div class="lab-card">
-          <div class="eyebrow">CHALLENGES</div>
-          <div class="challenge">
-            <strong>01 — Gain access to the admin account</strong
-            ><small>Comment out the password check with a SQL comment.</small>
+      </div>
+
+      <!-- PORTAL TAB (real-like site) -->
+      <div id="tab-portal" class="tab-panel">
+        <div class="lab-container">
+          <div class="portal-sim">
+            <div class="portal-header">
+              <div class="portal-logo">
+                <i class="fas fa-shield-alt"></i> SecureCorp
+              </div>
+              <div style="color: var(--muted); font-size: 11px">
+                Employee Portal
+              </div>
+            </div>
+            <div class="portal-body">
+              <h2>Sign in</h2>
+              <p class="subhead">Use your corporate credentials</p>
+
+              <div class="field-group">
+                <label for="user">Username</label>
+                <input
+                  id="user"
+                  class="lab-input"
+                  value="ahmed"
+                  autocomplete="off"
+                />
+              </div>
+              <div class="field-group">
+                <label for="pass">Password</label>
+                <input
+                  id="pass"
+                  class="lab-input"
+                  type="password"
+                  value="wrong"
+                  autocomplete="off"
+                />
+              </div>
+
+              <button id="login" class="auth-btn">
+                <i class="fas fa-arrow-right-to-bracket"></i> AUTHENTICATE
+              </button>
+              <div id="output"></div>
+              <div style="margin-top: 1rem; text-align: right">
+                <button
+                  id="reset-portal"
+                  class="lab-btn secondary"
+                  style="padding: 0.4rem 0.9rem; font-size: 0.8rem"
+                >
+                  <i class="fas fa-undo-alt"></i> RESET
+                </button>
+              </div>
+            </div>
           </div>
-          <div class="challenge">
-            <strong>02 — Understand the query</strong
-            ><small
-              >Compare the normal query with the manipulated one shown
-              above.</small
-            >
+        </div>
+      </div>
+
+      <!-- KEY TAKEAWAYS TAB -->
+      <div id="tab-takeaways" class="tab-panel">
+        <div class="lab-container">
+          <h1>Key Takeaways</h1>
+          <p class="lead">
+            You found a way in. Here's what actually happened — and why it
+            matters beyond this lab.
+          </p>
+
+          <!-- 01 -->
+          <div class="lab-card takeaway">
+            <div class="eyebrow">01 — WHAT JUST HAPPENED</div>
+            <p>
+              The login form built its SQL query by
+              <b>pasting your input directly into the query text</b>. It never
+              asked "is this a value, or is this code?" — it just glued strings
+              together.
+            </p>
+            <p class="muted">The application intended this:</p>
+            <pre><code>SELECT id, name, role FROM users
+WHERE name = '<em>ahmed</em>' AND password = '<em>wrong</em>'</code></pre>
+            <p class="muted">
+              But when you typed <code>admin' --</code>, it became:
+            </p>
+            <pre><code>SELECT id, name, role FROM users
+WHERE name = '<span class="inj">admin' --</span>' AND password = 'wrong'</code></pre>
+            <p>
+              The database doesn't see "a username". It sees
+              <b>a string that ends early</b>, followed by a <b>comment</b>.
+              Everything after <code>--</code> is thrown away — including the
+              password check.
+            </p>
           </div>
-          <details class="lab-solutions">
-            <summary>View solutions</summary>
 
-            <div class="solution">
-              <strong>01 — Bypass the password check</strong>
-              <small>Turn the rest of the query into a comment.</small>
-              <pre><code>Username: admin' --
-Password: (anything)</code></pre>
-              <p class="muted" style="margin: 8px 0 0">
-                The <code>--</code> makes SQL ignore everything after it, so the
-                password comparison is removed from the query.
-              </p>
+          <!-- 02 -->
+          <div class="lab-card takeaway">
+            <div class="eyebrow">02 — WHY THE DASHES WORK</div>
+            <p>
+              In SQL, <code>--</code> means
+              <b>"ignore the rest of this line"</b>. It's a comment marker, just
+              like <code>//</code> in JavaScript or <code>#</code> in Python.
+            </p>
+            <p class="muted">
+              So the database only ever evaluates this part of the query:
+            </p>
+            <pre><code>SELECT id, name, role FROM users
+WHERE name = 'admin'</code></pre>
+            <p>
+              No password condition. No second check. It finds the admin row and
+              returns it — and the application happily treats that as a
+              successful login.
+            </p>
+            <div class="takeaway-callout">
+              <b>The core insight:</b> your input stopped being
+              <em>data</em> and became <em>code</em>. That is the entire
+              vulnerability, in one sentence.
             </div>
+          </div>
 
-            <div class="solution">
-              <strong>02 — Alternative: force a true condition</strong>
-              <small>Make the WHERE clause always true.</small>
-              <pre><code>Username: ' OR 1=1 --
-Password: (anything)</code></pre>
-              <p class="muted" style="margin: 8px 0 0">
-                The first row of the users table is returned — usually the
-                admin.
-              </p>
-            </div>
+          <!-- 03 -->
+          <div class="lab-card takeaway">
+            <div class="eyebrow">03 — WHY IT'S DANGEROUS</div>
+            <p>
+              This isn't just about skipping a password on one form. Once an
+              attacker can rewrite the query, the consequences scale with
+              whatever the database user is allowed to do.
+            </p>
+            <ul class="takeaway-list">
+              <li>
+                <b>Authentication bypass</b> — log in as anyone, including
+                admins, without credentials. <em>(This lab.)</em>
+              </li>
+              <li>
+                <b>Data theft</b> — <code>UNION SELECT</code> can pull data from
+                <em>any</em> table: password hashes, private messages, API keys,
+                customer records.
+              </li>
+              <li>
+                <b>Data destruction</b> — <code>'; DROP TABLE users; --</code>
+                deletes entire tables in one request.
+              </li>
+              <li>
+                <b>Privilege escalation</b> — write a row into the
+                <code>admins</code> table and you've created a permanent
+                backdoor account.
+              </li>
+              <li>
+                <b>Full server takeover</b> — in misconfigured databases, an
+                attacker can read files or run OS commands through SQL.
+              </li>
+            </ul>
+            <p class="muted">
+              SQL injection has been in the OWASP Top 10 for over two decades.
+              It's not exotic — it's the single most common serious web
+              vulnerability, and it's <em>entirely preventable</em>.
+            </p>
+          </div>
 
-            <div class="solution">
-              <strong>03 — Trigger a real SQL error</strong>
-              <small>Break the syntax to see how errors leak structure.</small>
-              <pre><code>Username: '
-Password: (anything)</code></pre>
-              <p class="muted" style="margin: 8px 0 0">
-                The error reveals the shape of the query. In production this
-                should never be shown to a user.
-              </p>
+          <!-- 04 -->
+          <div class="lab-card takeaway">
+            <div class="eyebrow">04 — THE THREE MISTAKES</div>
+            <p>
+              Three separate bad decisions had to happen together for this
+              exploit to work. Fixing <em>any one</em> of them would have
+              stopped it.
+            </p>
+            <ol class="takeaway-list numbered">
+              <li>
+                <b>String concatenation.</b> User input was glued directly into
+                the query instead of being passed as a parameter.
+              </li>
+              <li>
+                <b>No input validation.</b> A username containing
+                <code>'</code> and <code>--</code> is not a username — it should
+                have been rejected before it ever reached the database.
+              </li>
+              <li>
+                <b>Verbose error messages.</b> When the query broke, the app
+                printed the raw SQL error to the browser. That's a free map of
+                the database for an attacker.
+              </li>
+            </ol>
+          </div>
+
+          <!-- 05 -->
+          <div class="lab-card takeaway">
+            <div class="eyebrow">05 — HOW TO FIX IT</div>
+            <p>
+              <b>Parameterized queries</b> (also called
+              <em>prepared statements</em>). The query structure is defined
+              first, and the user's input is sent separately — so it can
+              <em>never</em> be interpreted as code.
+            </p>
+            <p class="muted">Vulnerable version:</p>
+            <pre><code>const sql = "SELECT id, name, role FROM users " +
+            "WHERE name = '" + user + "' " +
+            "AND password = '" + pass + "'";</code></pre>
+            <p class="muted">Safe version:</p>
+            <pre><code>const sql = "SELECT id, name, role FROM users " +
+            "WHERE name = ? AND password = ?";
+db.query(sql, [user, pass]);</code></pre>
+            <p>
+              Same query. Same result for legitimate users. But now
+              <code>admin' --</code> is treated as a literal string — a username
+              that simply doesn't exist. The injection is
+              <b>structurally impossible</b>, not just filtered out.
+            </p>
+            <div class="takeaway-callout">
+              <b>Rule of thumb:</b> never build SQL by joining strings. If your
+              query text changes based on user input, you're doing it wrong.
             </div>
-          </details>
-          <button id="reset" class="lab-btn secondary">RESET</button>
+          </div>
+
+          <!-- 06 -->
+          <div class="lab-card takeaway">
+            <div class="eyebrow">06 — THE MENTAL MODEL</div>
+            <p class="takeaway-big">
+              Data should never be able to become code.
+            </p>
+            <p>
+              That's the pattern behind SQL injection, XSS, command injection,
+              path traversal, template injection — the entire injection family.
+              Different syntax, same bug:
+              <em
+                >untrusted input crosses the boundary from "value" into
+                "instruction"</em
+              >.
+            </p>
+            <p>
+              When you write code that mixes user input with anything that has a
+              <em>grammar</em> — SQL, HTML, shell, file paths — ask yourself:
+              <b>could this input change the structure of what I'm building?</b>
+              If the answer is yes, you need parameterization, escaping, or a
+              strict allowlist. Not a blacklist. Not a "sanitize" function
+              someone wrote on Stack Overflow.
+            </p>
+            <div class="takeaway-callout final">
+              <b>Next time you see a login form:</b> ask where the query comes
+              from. If you can't answer, assume it's concatenated.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOTTOM CAROUSEL: SQL QUERY LOG -->
+      <div class="sql-carousel" id="sqlCarousel">
+        <div class="sql-carousel-inner">
+          <div class="carousel-header">
+            <h3><i class="fas fa-terminal"></i> SQL QUERY LOG</h3>
+            <div class="carousel-nav">
+              <button id="prevSlide" aria-label="Previous query">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <button id="nextSlide" aria-label="Next query">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+          <div class="carousel-track-container">
+            <div class="carousel-track" id="carouselTrack">
+              <div class="carousel-slide">
+                <div class="sql-entry empty-log">
+                  No queries executed yet. Try logging in.
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="carousel-dots" id="carouselDots"></div>
         </div>
       </div>
     </div>
+
     <script src="script.js"></script>
   </body>
 </html>

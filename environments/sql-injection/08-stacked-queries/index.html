@@ -17,10 +17,16 @@
   <body>
     <div class="lab-page">
       <div class="lab-brand">
-        <strong>SQL INJECTION / LAB 08</strong
-        ><div style="display: flex; align-items: center; gap: 14px">
+        <strong>SQL INJECTION / LAB 08</strong>
+        <div style="display: flex; align-items: center; gap: 14px">
           <span>Stacked Queries — Data Destruction</span>
-          <button id="open-browser" class="lab-btn secondary" style="margin-top: 0; padding: 5px 10px">Open in browser ↗</button>
+          <button
+            id="open-browser"
+            class="lab-btn secondary"
+            style="margin-top: 0; padding: 5px 10px"
+          >
+            Open in browser ↗
+          </button>
         </div>
       </div>
       <div class="lab-container">
@@ -41,7 +47,7 @@
           <input
             id="email"
             class="lab-input"
-            value="alice@corp.com"
+            value="ahmed@corp.com"
             autocomplete="off"
           />
           <button id="run" class="lab-btn">UNSUBSCRIBE</button>
@@ -65,7 +71,7 @@
           </div>
           <div class="challenge">
             <strong>02 — Promote yourself</strong
-            ><small>Turn alice into an admin with one injected UPDATE.</small>
+            ><small>Turn ahmed into an admin with one injected UPDATE.</small>
           </div>
           <div class="challenge">
             <strong>03 — Plant a backdoor</strong
@@ -89,7 +95,7 @@
             <div class="solution">
               <strong>02 — Privilege escalation</strong>
               <small>Updates the users table directly.</small>
-              <pre><code>Email: x'; UPDATE users SET role='admin' WHERE name='alice'; --</code></pre>
+              <pre><code>Email: x'; UPDATE users SET role='admin' WHERE name='ahmed'; --</code></pre>
             </div>
 
             <div class="solution">

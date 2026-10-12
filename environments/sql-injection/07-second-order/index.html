@@ -17,10 +17,16 @@
   <body>
     <div class="lab-page">
       <div class="lab-brand">
-        <strong>SQL INJECTION / LAB 07</strong
-        ><div style="display: flex; align-items: center; gap: 14px">
+        <strong>SQL INJECTION / LAB 07</strong>
+        <div style="display: flex; align-items: center; gap: 14px">
           <span>Second-Order Injection</span>
-          <button id="open-browser" class="lab-btn secondary" style="margin-top: 0; padding: 5px 10px">Open in browser ↗</button>
+          <button
+            id="open-browser"
+            class="lab-btn secondary"
+            style="margin-top: 0; padding: 5px 10px"
+          >
+            Open in browser ↗
+          </button>
         </div>
       </div>
       <div class="lab-container">
@@ -39,7 +45,7 @@
             Update your profile. Nothing is queried with this value on save.
           </p>
           <label>Display name</label>
-          <input id="name" class="lab-input" value="alice" autocomplete="off" />
+          <input id="name" class="lab-input" value="ahmed" autocomplete="off" />
           <button id="save" class="lab-btn">SAVE PROFILE</button>
           <div id="save-output"></div>
         </div>
@@ -74,7 +80,7 @@
           <div class="challenge">
             <strong>03 — Become admin</strong
             ><small
-              >Your stored value reaches an UPDATE that sets role. Turn alice
+              >Your stored value reaches an UPDATE that sets role. Turn ahmed
               into an admin.</small
             >
           </div>
@@ -104,7 +110,7 @@
             <div class="solution">
               <strong>03 — Privilege escalation</strong>
               <small>The stored value reaches a role-update statement.</small>
-              <pre><code>Display name: x', role='admin' WHERE name='alice' --</code></pre>
+              <pre><code>Display name: x', role='admin' WHERE name='ahmed' --</code></pre>
               <p class="muted" style="margin: 8px 0 0">
                 On save, the app builds
                 <code

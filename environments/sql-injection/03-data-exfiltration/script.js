@@ -2,42 +2,42 @@
    Each table can be re-pointed with a query parameter named after the file's
    basename, e.g. ?users=../../mock/users.json  (relative or absolute URL). */
 const MOCK = {
-  users: "../../mock/users.json"
+    users: "../../mock/users.json"
 };
 
 let DB = null;
 let DB_LOADING = null;
 
 async function fetchTable(defaultPath) {
-  const key = defaultPath.split("/").pop().replace(/\.json$/i, "").toLowerCase();
-  const override = new URLSearchParams(location.search).get(key);
-  const src = new URL(override || defaultPath, location.href).toString();
-  const res = await fetch(src, { cache: "no-store" });
-  if (!res.ok) throw new Error("HTTP " + res.status);
-  const rows = await res.json();
-  if (!Array.isArray(rows)) throw new Error("expected a JSON array");
-  return rows;
+    const key = defaultPath.split("/").pop().replace(/\.json$/i, "").toLowerCase();
+    const override = new URLSearchParams(location.search).get(key);
+    const src = new URL(override || defaultPath, location.href).toString();
+    const res = await fetch(src, { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const rows = await res.json();
+    if (!Array.isArray(rows)) throw new Error("expected a JSON array");
+    return rows;
 }
 
 function getDB() {
-  if (DB) return Promise.resolve(DB);
-  if (!DB_LOADING) {
-    DB_LOADING = Promise.all(Object.values(MOCK).map(fetchTable)).then(all => {
-      const db = {};
-      Object.keys(MOCK).forEach((t, i) => { db[t] = all[i]; });
-      DB = db;
-      return DB;
-    }, err => { DB_LOADING = null; throw err; });
-  }
-  return DB_LOADING;
+    if (DB) return Promise.resolve(DB);
+    if (!DB_LOADING) {
+        DB_LOADING = Promise.all(Object.values(MOCK).map(fetchTable)).then(all => {
+            const db = {};
+            Object.keys(MOCK).forEach((t, i) => { db[t] = all[i]; });
+            DB = db;
+            return DB;
+        }, err => { DB_LOADING = null; throw err; });
+    }
+    return DB_LOADING;
 }
 
 async function ready(outId) {
-  try { await getDB(); return true; }
-  catch (e) {
-    document.getElementById(outId).innerHTML = '<p class="result-bad">Failed to load data</p>';
-    return false;
-  }
+    try { await getDB(); return true; }
+    catch (e) {
+        document.getElementById(outId).innerHTML = '<p class="result-bad">Failed to load data</p>';
+        return false;
+    }
 }
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({
@@ -231,44 +231,169 @@ function build(parts) {
     };
 }
 
-function renderRows(r) {
-    return '<div class="tw"><table class="lab-table"><tr>' +
-        r.head.map(h => "<th>" + esc(h) + "</th>").join("") +
-        "</tr>" +
-        r.rows.map(row =>
-            "<tr>" + row.map(cell => "<td>" + esc(cell) + "</td>").join("") + "</tr>"
-        ).join("") +
-        "</table></div>";
+/* ---------- UI ---------- */
+const $ = id => document.getElementById(id);
+
+/* ---------- TABS ---------- */
+document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        const tabId = btn.dataset.tab;
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+        document.getElementById("tab-" + tabId).classList.add("active");
+    });
+});
+
+/* ---------- SQL LOG CAROUSEL ---------- */
+const sqlLog = [];
+let currentSlide = 0;
+
+function renderCarousel() {
+    const track = $("carouselTrack");
+    const dotsContainer = $("carouselDots");
+    if (!track) return;
+
+    if (sqlLog.length === 0) {
+        track.innerHTML = `<div class="carousel-slide"><div class="sql-entry empty-log">No queries executed yet. Try a lookup.</div></div>`;
+        dotsContainer.innerHTML = "";
+        return;
+    }
+
+    track.innerHTML = sqlLog.map(entry => {
+        const ts = entry.timestamp.toLocaleTimeString([], {
+            hour: "2-digit", minute: "2-digit", second: "2-digit"
+        });
+        return `<div class="carousel-slide">
+      <div class="sql-entry">${entry.html}</div>
+      <div class="timestamp"><i class="far fa-clock"></i> ${ts}</div>
+    </div>`;
+    }).join("");
+
+    dotsContainer.innerHTML = sqlLog.map((_, idx) =>
+        `<span class="dot ${idx === currentSlide ? "active" : ""}" data-index="${idx}"></span>`
+    ).join("");
+
+    if (currentSlide >= sqlLog.length) currentSlide = sqlLog.length - 1;
+    if (currentSlide < 0) currentSlide = 0;
+    updateCarouselPosition();
+
+    dotsContainer.querySelectorAll(".dot").forEach(dot => {
+        dot.addEventListener("click", e => {
+            const idx = parseInt(e.target.dataset.index, 10);
+            if (!isNaN(idx)) {
+                currentSlide = idx;
+                updateCarouselPosition();
+                updateDots();
+            }
+        });
+    });
 }
 
-document.getElementById("lookup").onclick = async () => {
+function updateCarouselPosition() {
+    const track = $("carouselTrack");
+    if (!track) return;
+    track.style.transform = `translateX(-${currentSlide * 100}%)`;
+}
+
+function updateDots() {
+    document.querySelectorAll(".dot").forEach((dot, idx) => {
+        dot.classList.toggle("active", idx === currentSlide);
+    });
+}
+
+function addQueryToLog(html) {
+    sqlLog.push({ html, timestamp: new Date() });
+    const wasAtEnd = currentSlide === sqlLog.length - 2;
+    if (sqlLog.length === 1 || wasAtEnd) {
+        currentSlide = sqlLog.length - 1;
+    }
+    renderCarousel();
+    updateDots();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const prev = $("prevSlide");
+    const next = $("nextSlide");
+    if (prev) prev.addEventListener("click", () => {
+        if (sqlLog.length === 0) return;
+        currentSlide = (currentSlide - 1 + sqlLog.length) % sqlLog.length;
+        updateCarouselPosition();
+        updateDots();
+    });
+    if (next) next.addEventListener("click", () => {
+        if (sqlLog.length === 0) return;
+        currentSlide = (currentSlide + 1) % sqlLog.length;
+        updateCarouselPosition();
+        updateDots();
+    });
+    renderCarousel();
+});
+
+/* ---------- PROFILE RENDERING ---------- */
+function renderProfile(r) {
+    if (!r.rows.length) {
+        return '<div class="profile-empty">No user found.</div>';
+    }
+    const nameIdx = r.head.indexOf("name");
+    const col = nameIdx >= 0 ? nameIdx : 0;
+
+    return r.rows.map(row => {
+        const value = row[col];
+        const initial = String(value || "?").trim().charAt(0).toUpperCase();
+        return `<div class="profile-card">
+      <div class="profile-avatar">${esc(initial)}</div>
+      <div class="profile-meta">
+        <div class="label">Name</div>
+        <div class="value">${esc(value)}</div>
+      </div>
+    </div>`;
+    }).join("");
+}
+
+/* ---------- LOOKUP ---------- */
+$("lookup").onclick = async () => {
     if (!(await ready("output"))) return;
-    const v = document.getElementById("uid").value;
+    const v = $("uid").value;
 
     const b = build([
         "SELECT name FROM users WHERE id = '", { v: v }, "'"
     ]);
     const r = exec(b.sql);
 
-    let html = '<div class="query-box">' + b.html + "</div>";
+    let html = "";
     if (!r.ok) {
         html += '<p class="result-bad"><b>SQL error:</b> ' + esc(r.e) + "</p>";
-    } else if (r.rows.length) {
-        html += renderRows(r);
     } else {
-        html += '<p class="result-bad">No user found.</p>';
+        html += renderProfile(r);
     }
-    document.getElementById("output").innerHTML = html;
+    $("output").innerHTML = html;
+
+    /* push to SQL log carousel */
+    addQueryToLog(b.html);
 };
 
-document.getElementById("reset").onclick = () => {
-    document.getElementById("uid").value = "2";
-    document.getElementById("output").innerHTML = "";
-};
+/* ---------- RESET (assignment tab) ---------- */
+const resetTop = $("reset");
+if (resetTop) {
+    resetTop.onclick = () => {
+        $("uid").value = "2";
+        $("output").innerHTML = "";
+    };
+}
 
-/* ---------- open this lab in a full browser tab (keeps ?theme= and any overrides) ---------- */
+/* ---------- RESET (profile tab) ---------- */
+const resetProfile = $("reset-profile");
+if (resetProfile) {
+    resetProfile.onclick = () => {
+        $("uid").value = "2";
+        $("output").innerHTML = "";
+    };
+}
+
+/* ---------- open this lab in a full browser tab ---------- */
 document.getElementById("open-browser").onclick = () => {
-  const url = new URL(location.href);
-  url.searchParams.set("theme", document.documentElement.dataset.theme || "dracula");
-  window.open(url.toString(), "_blank", "noopener");
+    const url = new URL(location.href);
+    url.searchParams.set("theme", document.documentElement.dataset.theme || "dracula");
+    window.open(url.toString(), "_blank", "noopener");
 };

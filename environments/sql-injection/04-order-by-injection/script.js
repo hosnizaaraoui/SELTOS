@@ -2,43 +2,43 @@
    Each table can be re-pointed with a query parameter named after the file's
    basename, e.g. ?users=../../mock/users.json  (relative or absolute URL). */
 const MOCK = {
-  users: "../../mock/users.json",
-  products: "../../mock/products-tools.json"
+    users: "../../mock/users.json",
+    products: "../../mock/products-tools.json"
 };
 
 let DB = null;
 let DB_LOADING = null;
 
 async function fetchTable(defaultPath) {
-  const key = defaultPath.split("/").pop().replace(/\.json$/i, "").toLowerCase();
-  const override = new URLSearchParams(location.search).get(key);
-  const src = new URL(override || defaultPath, location.href).toString();
-  const res = await fetch(src, { cache: "no-store" });
-  if (!res.ok) throw new Error("HTTP " + res.status);
-  const rows = await res.json();
-  if (!Array.isArray(rows)) throw new Error("expected a JSON array");
-  return rows;
+    const key = defaultPath.split("/").pop().replace(/\.json$/i, "").toLowerCase();
+    const override = new URLSearchParams(location.search).get(key);
+    const src = new URL(override || defaultPath, location.href).toString();
+    const res = await fetch(src, { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const rows = await res.json();
+    if (!Array.isArray(rows)) throw new Error("expected a JSON array");
+    return rows;
 }
 
 function getDB() {
-  if (DB) return Promise.resolve(DB);
-  if (!DB_LOADING) {
-    DB_LOADING = Promise.all(Object.values(MOCK).map(fetchTable)).then(all => {
-      const db = {};
-      Object.keys(MOCK).forEach((t, i) => { db[t] = all[i]; });
-      DB = db;
-      return DB;
-    }, err => { DB_LOADING = null; throw err; });
-  }
-  return DB_LOADING;
+    if (DB) return Promise.resolve(DB);
+    if (!DB_LOADING) {
+        DB_LOADING = Promise.all(Object.values(MOCK).map(fetchTable)).then(all => {
+            const db = {};
+            Object.keys(MOCK).forEach((t, i) => { db[t] = all[i]; });
+            DB = db;
+            return DB;
+        }, err => { DB_LOADING = null; throw err; });
+    }
+    return DB_LOADING;
 }
 
 async function ready(outId) {
-  try { await getDB(); return true; }
-  catch (e) {
-    document.getElementById(outId).innerHTML = '<p class="result-bad">Failed to load data</p>';
-    return false;
-  }
+    try { await getDB(); return true; }
+    catch (e) {
+        document.getElementById(outId).innerHTML = '<p class="result-bad">Failed to load data</p>';
+        return false;
+    }
 }
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({
@@ -174,6 +174,18 @@ function run(sql, params) {
         if (!t || t.k !== "w" || !DB[t.v]) throw new Error("unknown table « " + (t ? t.v : "") + " »");
         let where = null;
         if (isW("where")) { p++; where = orE(); }
+
+        // ORDER BY <col> [ASC|DESC] — parsed but not used for sorting in this
+        // simulator. Included so the base query doesn't trip the "syntax near
+        // « order »" error and so the sort field is a real concatenation point.
+        if (isW("order")) {
+            p++;
+            exp("by");
+            const sortCol = nx();
+            if (!sortCol) throw new Error("syntax: column expected after ORDER BY");
+            if (isW("asc") || isW("desc")) p++;
+        }
+
         return { cols, table: t.v, where };
     }
 
@@ -242,10 +254,110 @@ function renderRows(r) {
         "</table></div>";
 }
 
-document.getElementById("run").onclick = async () => {
+/* ---------- UI ---------- */
+const $ = id => document.getElementById(id);
+
+/* ---------- TABS ---------- */
+document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        const tabId = btn.dataset.tab;
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+        document.getElementById("tab-" + tabId).classList.add("active");
+    });
+});
+
+/* ---------- SQL LOG CAROUSEL ---------- */
+const sqlLog = [];
+let currentSlide = 0;
+
+function renderCarousel() {
+    const track = $("carouselTrack");
+    const dotsContainer = $("carouselDots");
+    if (!track) return;
+
+    if (sqlLog.length === 0) {
+        track.innerHTML = `<div class="carousel-slide"><div class="sql-entry empty-log">No queries executed yet. Try a run.</div></div>`;
+        dotsContainer.innerHTML = "";
+        return;
+    }
+
+    track.innerHTML = sqlLog.map(entry => {
+        const ts = entry.timestamp.toLocaleTimeString([], {
+            hour: "2-digit", minute: "2-digit", second: "2-digit"
+        });
+        return `<div class="carousel-slide">
+      <div class="sql-entry">${entry.html}</div>
+      <div class="timestamp"><i class="far fa-clock"></i> ${ts}</div>
+    </div>`;
+    }).join("");
+
+    dotsContainer.innerHTML = sqlLog.map((_, idx) =>
+        `<span class="dot ${idx === currentSlide ? "active" : ""}" data-index="${idx}"></span>`
+    ).join("");
+
+    if (currentSlide >= sqlLog.length) currentSlide = sqlLog.length - 1;
+    if (currentSlide < 0) currentSlide = 0;
+    updateCarouselPosition();
+
+    dotsContainer.querySelectorAll(".dot").forEach(dot => {
+        dot.addEventListener("click", e => {
+            const idx = parseInt(e.target.dataset.index, 10);
+            if (!isNaN(idx)) {
+                currentSlide = idx;
+                updateCarouselPosition();
+                updateDots();
+            }
+        });
+    });
+}
+
+function updateCarouselPosition() {
+    const track = $("carouselTrack");
+    if (!track) return;
+    track.style.transform = `translateX(-${currentSlide * 100}%)`;
+}
+
+function updateDots() {
+    document.querySelectorAll(".dot").forEach((dot, idx) => {
+        dot.classList.toggle("active", idx === currentSlide);
+    });
+}
+
+function addQueryToLog(html) {
+    sqlLog.push({ html, timestamp: new Date() });
+    const wasAtEnd = currentSlide === sqlLog.length - 2;
+    if (sqlLog.length === 1 || wasAtEnd) {
+        currentSlide = sqlLog.length - 1;
+    }
+    renderCarousel();
+    updateDots();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const prev = $("prevSlide");
+    const next = $("nextSlide");
+    if (prev) prev.addEventListener("click", () => {
+        if (sqlLog.length === 0) return;
+        currentSlide = (currentSlide - 1 + sqlLog.length) % sqlLog.length;
+        updateCarouselPosition();
+        updateDots();
+    });
+    if (next) next.addEventListener("click", () => {
+        if (sqlLog.length === 0) return;
+        currentSlide = (currentSlide + 1) % sqlLog.length;
+        updateCarouselPosition();
+        updateDots();
+    });
+    renderCarousel();
+});
+
+/* ---------- RUN ---------- */
+$("run").onclick = async () => {
     if (!(await ready("output"))) return;
-    const sort = document.getElementById("sort").value;
-    const cat = document.getElementById("cat").value;
+    const sort = $("sort").value;
+    const cat = $("cat").value;
 
     const b = build([
         "SELECT name, cost FROM products WHERE category = '", { v: cat },
@@ -253,26 +365,43 @@ document.getElementById("run").onclick = async () => {
     ]);
     const r = exec(b.sql);
 
-    let html = '<div class="query-box">' + b.html + "</div>";
+    let html = "";
     if (!r.ok) {
         html += '<p class="result-bad"><b>SQL error:</b> ' + esc(r.e) + "</p>";
     } else if (r.rows.length) {
         html += renderRows(r);
     } else {
-        html += '<p class="result-bad">No products found.</p>';
+        html += '<div class="catalog-empty">No products found.</div>';
     }
-    document.getElementById("output").innerHTML = html;
+    $("output").innerHTML = html;
+
+    /* push to SQL log carousel */
+    addQueryToLog(b.html);
 };
 
-document.getElementById("reset").onclick = () => {
-    document.getElementById("sort").value = "name";
-    document.getElementById("cat").value = "tools";
-    document.getElementById("output").innerHTML = "";
-};
+/* ---------- RESET (assignment tab) ---------- */
+const resetTop = $("reset");
+if (resetTop) {
+    resetTop.onclick = () => {
+        $("sort").value = "name";
+        $("cat").value = "tools";
+        $("output").innerHTML = "";
+    };
+}
 
-/* ---------- open this lab in a full browser tab (keeps ?theme= and any overrides) ---------- */
+/* ---------- RESET (catalog tab) ---------- */
+const resetCatalog = $("reset-catalog");
+if (resetCatalog) {
+    resetCatalog.onclick = () => {
+        $("sort").value = "name";
+        $("cat").value = "tools";
+        $("output").innerHTML = "";
+    };
+}
+
+/* ---------- open this lab in a full browser tab ---------- */
 document.getElementById("open-browser").onclick = () => {
-  const url = new URL(location.href);
-  url.searchParams.set("theme", document.documentElement.dataset.theme || "dracula");
-  window.open(url.toString(), "_blank", "noopener");
+    const url = new URL(location.href);
+    url.searchParams.set("theme", document.documentElement.dataset.theme || "dracula");
+    window.open(url.toString(), "_blank", "noopener");
 };

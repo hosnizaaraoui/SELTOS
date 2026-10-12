@@ -10,89 +10,444 @@
         if (t) document.documentElement.dataset.theme = t;
       })();
     </script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
     <link rel="stylesheet" href="../../../css/theme.css" />
     <link rel="stylesheet" href="../../../css/components.css" />
     <link rel="stylesheet" href="../../../css/labs.css" />
+
+    <!-- Lab-03 specific styles only. Everything else comes from labs.css. -->
+    <style>
+      .profile-sim {
+        border: 1px solid var(--line2);
+        background: var(--bg);
+        border-radius: 12px;
+        overflow: hidden;
+        margin: 10px 0;
+      }
+      .profile-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 22px;
+        border-bottom: 1px solid var(--line);
+        background: color-mix(
+          in srgb,
+          var(--panel2, var(--bg)) 70%,
+          transparent
+        );
+      }
+      .profile-logo {
+        font-weight: 800;
+        font-size: 13px;
+        letter-spacing: 0.06em;
+        color: var(--text);
+      }
+      .profile-logo i {
+        color: var(--accent);
+        margin-right: 6px;
+      }
+      .profile-body {
+        padding: 22px;
+      }
+      .profile-toolbar {
+        display: flex;
+        gap: 10px;
+        align-items: stretch;
+        margin-bottom: 16px;
+      }
+      .profile-toolbar .lab-input {
+        flex: 1;
+        margin: 0;
+      }
+      .profile-toolbar .lab-btn {
+        margin-top: 0;
+        white-space: nowrap;
+      }
+      .profile-card {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        border: 1px solid var(--line2);
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 10px;
+        padding: 16px;
+        margin-top: 6px;
+      }
+      .profile-avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: color-mix(in srgb, var(--accent) 18%, transparent);
+        border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+        color: var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 16px;
+        flex-shrink: 0;
+      }
+      .profile-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .profile-meta .label {
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .profile-meta .value {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text);
+        font-family: ui-monospace, Menlo, monospace;
+      }
+      .profile-empty {
+        color: var(--muted);
+        font-style: italic;
+        font-size: 12px;
+        text-align: center;
+        padding: 22px 0;
+      }
+    </style>
   </head>
   <body>
     <div class="lab-page">
       <div class="lab-brand">
-        <strong>SQL INJECTION / LAB 03</strong><div style="display: flex; align-items: center; gap: 14px">
+        <strong>SQL INJECTION / LAB 03</strong>
+        <div style="display: flex; align-items: center; gap: 14px">
           <span>DATA EXFILTRATION</span>
-          <button id="open-browser" class="lab-btn secondary" style="margin-top: 0; padding: 5px 10px">Open in browser ↗</button>
+          <button
+            id="open-browser"
+            class="lab-btn secondary"
+            style="margin-top: 0; padding: 5px 10px"
+          >
+            Open in browser ↗
+          </button>
         </div>
       </div>
-      <div class="lab-container">
-        <h1>Data Exfiltration</h1>
-        <p class="lead">
-          A public profile viewer. It only returns the name of a user by ID —
-          but if you can reshape the query, you can read columns the developer
-          never intended to expose.
-        </p>
-        <div class="lab-card">
-          <div class="eyebrow">PROFILE LOOKUP</div>
-          <label>User ID</label
-          ><input id="uid" class="lab-input" value="2" autocomplete="off" />
-          <button id="lookup" class="lab-btn">LOOKUP</button>
-          <div id="output"></div>
-        </div>
-        <div class="lab-card">
-          <div class="eyebrow">CHALLENGES</div>
-          <div class="challenge">
-            <strong>01 — Discover the column count</strong
-            ><small
-              >The query returns exactly one column. Try UNION SELECT with
-              different column counts and read the error carefully.</small
-            >
-          </div>
-          <div class="challenge">
-            <strong>02 — Leak the password column</strong
-            ><small
-              >Once the column count matches, replace the returned column with
-              <code>password</code> from the users table.</small
-            >
-          </div>
-          <div class="challenge">
-            <strong>03 — Leak multiple columns at once</strong
-            ><small
-              >The database has a <code>role</code> column too. Combine two
-              columns into one output column.</small
-            >
-          </div>
-          <details class="lab-solutions">
-            <summary>View solutions</summary>
 
-            <div class="solution">
-              <strong>01 — Find the column count</strong>
-              <small>The base query returns exactly one column.</small>
-              <pre><code>User ID: ' UNION SELECT 1 --</code></pre>
-              <p class="muted" style="margin: 8px 0 0">
-                If the error says the column counts don't match, try fewer or
-                more values until it accepts it.
-              </p>
+      <!-- TABS -->
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="assignment">
+          <i class="fas fa-tasks"></i> Assignment
+        </button>
+        <button class="tab-btn" data-tab="profile">
+          <i class="fas fa-id-card"></i> Profile Viewer
+        </button>
+        <button class="tab-btn" data-tab="takeaways">
+          <i class="fas fa-brain"></i> Key Takeaways
+        </button>
+      </div>
+
+      <!-- ASSIGNMENT TAB -->
+      <div id="tab-assignment" class="tab-panel active">
+        <div class="lab-container">
+          <h1>Data Exfiltration</h1>
+          <p class="lead">
+            A public profile viewer. It only returns the name of a user by ID —
+            but if you can reshape the query, you can read columns the developer
+            never intended to expose.
+          </p>
+
+          <div class="lab-card">
+            <div class="eyebrow">CHALLENGES</div>
+
+            <div class="challenge">
+              <strong>01 — Discover the column count</strong>
+              <small>
+                The query returns exactly one column. Try
+                <code>UNION SELECT</code> with different column counts and read
+                the error carefully.
+              </small>
+              <div class="challenge-hint">
+                <i class="fas fa-arrow-right"></i> Try it in the
+                <b>Profile Viewer</b> tab. Watch the <b>SQL log</b> to see the
+                query change.
+              </div>
             </div>
 
-            <div class="solution">
+            <div class="challenge">
               <strong>02 — Leak the password column</strong>
-              <small>Replace the returned column with the sensitive one.</small>
-              <pre><code>User ID: ' UNION SELECT password FROM users --</code></pre>
+              <small>
+                Once the column count matches, replace the returned column with
+                <code>password</code> from the users table.
+              </small>
             </div>
 
-            <div class="solution">
-              <strong>03 — Leak every sensitive column at once</strong>
-              <small>Return one row per user.</small>
-              <pre><code>User ID: ' UNION SELECT password FROM users WHERE role = 'admin' --</code></pre>
-              <p class="muted" style="margin: 8px 0 0">
-                The lab's simplified engine doesn't support string concatenation
-                with
-                <code>||</code>, so one column per query is the intended path.
-              </p>
+            <div class="challenge">
+              <strong>03 — Leak only the admin's password</strong>
+              <small>
+                Add a condition so the leaked row is the one you actually want.
+              </small>
             </div>
-          </details>
-          <button id="reset" class="lab-btn secondary">RESET</button>
+
+            <details class="lab-solutions">
+              <summary>View solutions</summary>
+
+              <div class="solution">
+                <strong>01 — Find the column count</strong>
+                <small>The base query returns exactly one column.</small>
+                <pre><code>User ID: ' UNION SELECT 1 --</code></pre>
+                <p class="muted" style="margin: 8px 0 0">
+                  The error will tell you if the column counts don't match.
+                  Adjust the number of values until it accepts them.
+                </p>
+              </div>
+
+              <div class="solution">
+                <strong>02 — Leak the password column</strong>
+                <small
+                  >Replace the returned column with the sensitive one.</small
+                >
+                <pre><code>User ID: ' UNION SELECT password FROM users --</code></pre>
+                <p class="muted" style="margin: 8px 0 0">
+                  You now get one row per user, with the password field rendered
+                  where the profile name used to be. In this mock they're plain
+                  strings; in a real app that column might hold hashes, tokens,
+                  or nothing sensitive at all — the point is that
+                  <em>you</em> chose what the page displays.
+                </p>
+              </div>
+
+              <div class="solution">
+                <strong>03 — Target a specific account</strong>
+                <small
+                  >Filter the leaked rows so only the admin comes back.</small
+                >
+                <pre><code>User ID: ' UNION SELECT password FROM users WHERE role = 'admin' --</code></pre>
+                <p class="muted" style="margin: 8px 0 0">
+                  This lab's simplified engine doesn't support
+                  <code>||</code> string concatenation, so leaking multiple
+                  columns in a single cell isn't possible here — one column per
+                  query is the intended path.
+                </p>
+              </div>
+            </details>
+
+            <button id="reset" class="lab-btn secondary">RESET</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROFILE VIEWER TAB -->
+      <div id="tab-profile" class="tab-panel">
+        <div class="lab-container">
+          <div class="profile-sim">
+            <div class="profile-header">
+              <div class="profile-logo">
+                <i class="fas fa-id-card"></i> Nimbus Directory
+              </div>
+              <div style="color: var(--muted); font-size: 11px">
+                Public Profile Viewer
+              </div>
+            </div>
+            <div class="profile-body">
+              <div class="profile-toolbar">
+                <input
+                  id="uid"
+                  class="lab-input"
+                  value="2"
+                  autocomplete="off"
+                  placeholder="User ID"
+                />
+                <button id="lookup" class="lab-btn">
+                  <i class="fas fa-search"></i> LOOKUP
+                </button>
+              </div>
+              <div id="output"></div>
+              <div style="margin-top: 1rem; text-align: right">
+                <button
+                  id="reset-profile"
+                  class="lab-btn secondary"
+                  style="padding: 0.4rem 0.9rem; font-size: 0.8rem"
+                >
+                  <i class="fas fa-undo-alt"></i> RESET
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KEY TAKEAWAYS TAB -->
+      <div id="tab-takeaways" class="tab-panel">
+        <div class="lab-container">
+          <h1>Key Takeaways</h1>
+          <p class="lead">
+            Labs 01 and 02 taught you to skip a check and reveal a row. Lab 03
+            teaches you to <b>redirect the output</b> — to point the query at
+            columns it was never written to return.
+          </p>
+
+          <!-- 01 -->
+          <div class="lab-card takeaway">
+            <div class="eyebrow">01 — WHAT JUST HAPPENED</div>
+            <p>
+              The viewer pastes your ID into a query that returns exactly one
+              column. The application <em>intended</em> this:
+            </p>
+            <pre><code>SELECT name FROM users WHERE id = '<em>2</em>'</code></pre>
+            <p class="muted">
+              But when you typed
+              <code>' UNION SELECT password FROM users --</code>:
+            </p>
+            <pre><code>SELECT name FROM users WHERE id = '<span class="inj">' UNION SELECT password FROM users --</span>'</code></pre>
+            <p>
+              The first <code>'</code> closes the ID string, the
+              <code>UNION SELECT</code> appends a second result set to the
+              first, and the <code>--</code> comments out the leftover quote.
+              The database happily returns the <b>password column</b> in the
+              slot the page was going to print as "name".
+            </p>
+          </div>
+
+          <!-- 02 -->
+          <div class="lab-card takeaway">
+            <div class="eyebrow">02 — WHY UNION WORKS</div>
+            <p>
+              <code>UNION</code> is a normal SQL feature: it merges the rows of
+              two <code>SELECT</code> statements into one result set. The
+              database doesn't care that the second statement came from user
+              input — it only checks that both sides return the same number of
+              columns.
+            </p>
+            <p>
+              That's why challenge 01 is "find the column count": once you know
+              the shape, you can slot <em>any</em> column you want into it, from
+              <em>any</em> table the database user can read.
+            </p>
+            <div class="takeaway-callout">
+              <b>The core insight:</b> you're not breaking the query — you're
+              <em>extending</em> it. The app asked for one column, and you
+              politely handed it a different one.
+            </div>
+          </div>
+
+          <!-- 03 -->
+          <div class="lab-card takeaway">
+            <div class="eyebrow">03 — WHY IT'S DANGEROUS</div>
+            <p>
+              Labs 01 and 02 gave you a boolean ("did it match?") and a
+              visibility toggle. Lab 03 gives you a <b>print channel</b> — a
+              place on the page where any value you ask for will appear.
+            </p>
+            <ul class="takeaway-list">
+              <li>
+                <b>Credential theft.</b>
+                <code>UNION SELECT password FROM users</code> dumps every
+                password in the table. <em>(This lab.)</em>
+              </li>
+              <li>
+                <b>Schema discovery.</b> In a real database,
+                <code>information_schema.tables</code> lists every table and
+                column — a map of the entire system, obtained the same way.
+              </li>
+              <li>
+                <b>Cross-table reach.</b> The original query only ever touched
+                <code>users</code>. Your payload can read <code>orders</code>,
+                <code>payments</code>, <code>sessions</code>, anything the DB
+                user is allowed to see.
+              </li>
+              <li>
+                <b>Silent and repeatable.</b> No visible error, no alert — a
+                scraper can run this thousands of times and reconstruct the
+                whole database.
+              </li>
+            </ul>
+            <p class="muted">
+              This is the classic "in-band" SQL injection technique. It's the
+              fastest and most damaging form, and it's why search bars and
+              profile lookups are favourite targets.
+            </p>
+          </div>
+
+          <!-- 04 -->
+          <div class="lab-card takeaway">
+            <div class="eyebrow">04 — THE THREE MISTAKES</div>
+            <ol class="takeaway-list numbered">
+              <li>
+                <b>Concatenation.</b> The ID is glued into the query text
+                instead of being bound as a parameter. This is the same root
+                cause as Labs 01 and 02.
+              </li>
+              <li>
+                <b>Trusting a single column as a boundary.</b> The developer
+                assumed "the query returns one column, so there's nothing to
+                leak." <code>UNION</code> makes that assumption meaningless.
+              </li>
+              <li>
+                <b>No least privilege.</b> The web app's DB user can read the
+                <code>password</code> column and every other table. If it only
+                had <code>SELECT(name)</code> on a public view, the leak would
+                be impossible even with the injection.
+              </li>
+            </ol>
+          </div>
+
+          <!-- 05 -->
+          <div class="lab-card takeaway">
+            <div class="eyebrow">05 — HOW TO FIX IT</div>
+            <p class="muted">Vulnerable:</p>
+            <pre><code>const sql = "SELECT name FROM users WHERE id = '" + id + "'";</code></pre>
+            <p class="muted">Safe — parameterized:</p>
+            <pre><code>const sql = "SELECT name FROM users WHERE id = ?";
+db.query(sql, [id]);</code></pre>
+            <p>
+              With a bound parameter,
+              <code>' UNION SELECT password FROM users --</code> is treated as
+              <em>literally</em> the string that was typed into the ID field.
+              The database looks for a user whose ID is that exact nonsense
+              string, finds nobody, and returns an empty result. The
+              <code>UNION</code> keyword never reaches the parser.
+            </p>
+            <p class="muted">And a second layer, always worth adding:</p>
+            <pre><code>// public_view exposes only the columns the public needs
+GRANT SELECT (id, name) ON public_view TO web_app;
+-- The password column is not even reachable by the web app's DB user.</code></pre>
+            <div class="takeaway-callout">
+              <b>Rule of thumb:</b> parameterize the query <em>and</em> restrict
+              what the DB user can read. Either one stops this lab; together
+              they stop the whole class.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOTTOM CAROUSEL: SQL QUERY LOG -->
+      <div class="sql-carousel" id="sqlCarousel">
+        <div class="sql-carousel-inner">
+          <div class="carousel-header">
+            <h3><i class="fas fa-terminal"></i> SQL QUERY LOG</h3>
+            <div class="carousel-nav">
+              <button id="prevSlide" aria-label="Previous query">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <button id="nextSlide" aria-label="Next query">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+          <div class="carousel-track-container">
+            <div class="carousel-track" id="carouselTrack">
+              <div class="carousel-slide">
+                <div class="sql-entry empty-log">
+                  No queries executed yet. Try a lookup.
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="carousel-dots" id="carouselDots"></div>
         </div>
       </div>
     </div>
+
     <script src="script.js"></script>
   </body>
 </html>

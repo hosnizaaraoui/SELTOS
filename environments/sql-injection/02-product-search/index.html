@@ -10,82 +10,442 @@
         if (t) document.documentElement.dataset.theme = t;
       })();
     </script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
     <link rel="stylesheet" href="../../../css/theme.css" />
     <link rel="stylesheet" href="../../../css/components.css" />
     <link rel="stylesheet" href="../../../css/labs.css" />
+
+    <!-- Lab-02 specific styles (product grid + store header). Everything else
+         comes from labs.css: .lab-card, .lab-input, .lab-btn, .query-box,
+         .result-ok, .result-bad, .challenge, .lab-solutions, .tabs, .sql-carousel, etc. -->
+    <style>
+      /* ---- store header (reuses .portal-* from labs.css if present, otherwise
+              this is a self-contained override so the lab looks right even
+              before labs.css is updated with the Lab-01 additions) ---- */
+      .store-sim {
+        border: 1px solid var(--line2);
+        background: var(--bg);
+        border-radius: 12px;
+        overflow: hidden;
+        margin: 10px 0;
+      }
+      .store-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 22px;
+        border-bottom: 1px solid var(--line);
+        background: color-mix(
+          in srgb,
+          var(--panel2, var(--bg)) 70%,
+          transparent
+        );
+      }
+      .store-logo {
+        font-weight: 800;
+        font-size: 13px;
+        letter-spacing: 0.06em;
+        color: var(--text);
+      }
+      .store-logo i {
+        color: var(--accent);
+        margin-right: 6px;
+      }
+      .store-body {
+        padding: 22px;
+      }
+      .store-toolbar {
+        display: flex;
+        gap: 10px;
+        align-items: stretch;
+        margin-bottom: 16px;
+      }
+      .store-toolbar .lab-input {
+        flex: 1;
+        margin: 0;
+      }
+      .store-toolbar .lab-btn {
+        margin-top: 0;
+        white-space: nowrap;
+      }
+
+      /* ---- product grid ---- */
+      .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+        gap: 12px;
+        margin-top: 4px;
+      }
+      .product-card {
+        border: 1px solid var(--line2);
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 10px;
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        transition:
+          border-color 0.12s ease,
+          background 0.12s ease;
+      }
+      .product-card:hover {
+        border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+        background: color-mix(in srgb, var(--accent) 5%, transparent);
+      }
+      .product-card .p-name {
+        font-weight: 700;
+        font-size: 13px;
+        color: var(--text);
+        line-height: 1.35;
+      }
+      .product-card .p-price {
+        font-family: ui-monospace, Menlo, monospace;
+        font-size: 13px;
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .product-card .p-badge {
+        align-self: flex-start;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        padding: 2px 7px;
+        border-radius: 99px;
+        border: 1px solid;
+      }
+      .p-badge.public {
+        color: var(--ok);
+        border-color: color-mix(in srgb, var(--ok) 45%, transparent);
+        background: color-mix(in srgb, var(--ok) 8%, transparent);
+      }
+      .p-badge.hidden {
+        color: var(--warn);
+        border-color: color-mix(in srgb, var(--warn) 45%, transparent);
+        background: color-mix(in srgb, var(--warn) 8%, transparent);
+      }
+      .store-empty {
+        color: var(--muted);
+        font-style: italic;
+        font-size: 12px;
+        text-align: center;
+        padding: 22px 0;
+      }
+
+      /* ---- highlighted cell in the "leaked" table (UNION demo) ---- */
+      .lab-table .leaked {
+        color: var(--warn);
+        font-weight: 800;
+      }
+    </style>
   </head>
   <body>
     <div class="lab-page">
       <div class="lab-brand">
-        <strong>SQL INJECTION / LAB 02</strong><div style="display: flex; align-items: center; gap: 14px">
+        <strong>SQL INJECTION / LAB 02</strong>
+        <div style="display: flex; align-items: center; gap: 14px">
           <span>PRODUCT SEARCH</span>
-          <button id="open-browser" class="lab-btn secondary" style="margin-top: 0; padding: 5px 10px">Open in browser ↗</button>
+          <button
+            id="open-browser"
+            class="lab-btn secondary"
+            style="margin-top: 0; padding: 5px 10px"
+          >
+            Open in browser ↗
+          </button>
         </div>
       </div>
-      <div class="lab-container">
-        <h1>Product Search</h1>
-        <p class="lead">
-          The application intends to show only public products. Investigate what
-          happens when the search condition is manipulated.
-        </p>
-        <div class="lab-card">
-          <div class="eyebrow">STORE SEARCH</div>
-          <label>Search</label
-          ><input
-            id="q"
-            class="lab-input"
-            value="keyboard"
-            autocomplete="off"
-          />
-          <button id="search" class="lab-btn">SEARCH</button>
-          <div id="output"></div>
-        </div>
-        <div class="lab-card">
-          <div class="eyebrow">CHALLENGES</div>
-          <div class="challenge">
-            <strong>01 — Return a hidden product</strong
-            ><small>Find a way to make the filtering condition true.</small>
-          </div>
-          <div class="challenge">
-            <strong>02 — Understand the query</strong
-            ><small
-              >Compare the normal query with the manipulated one shown
-              above.</small
-            >
-          </div>
-          <details class="lab-solutions">
-            <summary>View solutions</summary>
 
-            <div class="solution">
+      <!-- TABS -->
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="assignment">
+          <i class="fas fa-tasks"></i> Assignment
+        </button>
+        <button class="tab-btn" data-tab="store">
+          <i class="fas fa-store"></i> Store
+        </button>
+        <button class="tab-btn" data-tab="takeaways">
+          <i class="fas fa-brain"></i> Key Takeaways
+        </button>
+      </div>
+
+      <!-- ASSIGNMENT TAB -->
+      <div id="tab-assignment" class="tab-panel active">
+        <div class="lab-container">
+          <h1>Product Search</h1>
+          <p class="lead">
+            The application intends to show only public products. Investigate
+            what happens when the search condition is manipulated.
+          </p>
+
+          <div class="lab-card">
+            <div class="eyebrow">CHALLENGES</div>
+
+            <div class="challenge">
               <strong>01 — Return a hidden product</strong>
-              <small>Make the <code>public = 1</code> filter irrelevant.</small>
-              <pre><code>Search: %' OR public = 0 --</code></pre>
-              <p class="muted" style="margin: 8px 0 0">
-                The <code>OR public = 0</code> widens the match; the trailing
-                <code>--</code> comments out the original filter.
-              </p>
+              <small>Find a way to make the filtering condition true.</small>
+              <div class="challenge-hint">
+                <i class="fas fa-arrow-right"></i> Try it in the
+                <b>Store</b> tab. Watch the <b>SQL log</b> to see the query
+                change.
+              </div>
             </div>
 
-            <div class="solution">
-              <strong>02 — Return every product</strong>
-              <small>Force a condition that's always true.</small>
-              <pre><code>Search: ' OR 1=1 --</code></pre>
+            <div class="challenge">
+              <strong>02 — Understand the query</strong>
+              <small>Compare the normal query with the manipulated one.</small>
+              <div class="challenge-hint">
+                <i class="fas fa-arrow-right"></i> Search a normal word first,
+                then an injection. Compare the two entries in the SQL log.
+              </div>
             </div>
 
-            <div class="solution">
-              <strong>03 — Discover the column count</strong>
-              <small>Prepare for a UNION attack.</small>
-              <pre><code>Search: ' UNION SELECT 1, 2, 3 --</code></pre>
-              <p class="muted" style="margin: 8px 0 0">
-                If the error says the column counts don't match, adjust until
-                they do.
-              </p>
+            <details class="lab-solutions">
+              <summary>View solutions</summary>
+
+              <div class="solution">
+                <strong>01 — Return hidden products</strong>
+                <small>
+                  Close the string early and comment out the
+                  <code>AND public = 1</code> filter.
+                </small>
+                <pre><code>Search: ' --</code></pre>
+                <p class="muted" style="margin: 8px 0 0">
+                  <code>LIKE '%'</code> matches every product. The
+                  <code>--</code> removes the filter that was supposed to keep
+                  hidden ones out.
+                </p>
+              </div>
+
+              <div class="solution">
+                <strong>02 — Return every product explicitly</strong>
+                <small>Same idea, written out so the intent is visible.</small>
+                <pre><code>Search: %' --</code></pre>
+                <p class="muted" style="margin: 8px 0 0">
+                  Identical behaviour to <code>' --</code>: all rows, public and
+                  hidden.
+                </p>
+              </div>
+
+              <div class="solution">
+                <strong>03 — Trigger a SQL error</strong>
+                <small
+                  >Break the syntax to see how errors leak structure.</small
+                >
+                <pre><code>Search: '</code></pre>
+                <p class="muted" style="margin: 8px 0 0">
+                  The unterminated quote shows the query's shape in the error
+                  message. In production this should never be shown to a user.
+                </p>
+              </div>
+            </details>
+
+            <button id="reset" class="lab-btn secondary">RESET</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STORE TAB -->
+      <div id="tab-store" class="tab-panel">
+        <div class="lab-container">
+          <div class="store-sim">
+            <div class="store-header">
+              <div class="store-logo">
+                <i class="fas fa-store"></i> Nimbus Store
+              </div>
+              <div style="color: var(--muted); font-size: 11px">
+                Product Catalogue
+              </div>
             </div>
-          </details>
-          <button id="reset" class="lab-btn secondary">RESET</button>
+            <div class="store-body">
+              <div class="store-toolbar">
+                <input
+                  id="q"
+                  class="lab-input"
+                  value="keyboard"
+                  autocomplete="off"
+                  placeholder="Search products…"
+                />
+                <button id="search" class="lab-btn">
+                  <i class="fas fa-search"></i> SEARCH
+                </button>
+              </div>
+              <div id="output"></div>
+              <div style="margin-top: 1rem; text-align: right">
+                <button
+                  id="reset-store"
+                  class="lab-btn secondary"
+                  style="padding: 0.4rem 0.9rem; font-size: 0.8rem"
+                >
+                  <i class="fas fa-undo-alt"></i> RESET
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KEY TAKEAWAYS TAB -->
+      <div id="tab-takeaways" class="tab-panel">
+        <div class="lab-container">
+          <h1>Key Takeaways</h1>
+          <p class="lead">
+            Lab 01 was about skipping a check. Lab 02 is about
+            <b>reading data you were never meant to see</b> — the same bug, a
+            different goal.
+          </p>
+
+          <!-- 01 -->
+          <div class="lab-card takeaway">
+            <div class="eyebrow">01 — WHAT JUST HAPPENED</div>
+            <p>
+              The search box pastes your text directly into the query. The
+              application <em>intended</em> this:
+            </p>
+            <pre><code>SELECT name, price, public FROM products
+WHERE name LIKE '<em>%keyboard%</em>' AND public = 1</code></pre>
+            <p class="muted">But when you typed <code>' --</code>:</p>
+            <pre><code>SELECT name, price, public FROM products
+WHERE name LIKE '<span class="inj">%' --</span>%' AND public = 1</code></pre>
+            <p>
+              The <code>'</code> closes the string, leaving
+              <code>LIKE '%'</code> — which matches <b>every</b> product. The
+              <code>--</code> then comments out the rest of the line, deleting
+              the <code>AND public = 1</code> filter entirely. Hidden products
+              come back with the public ones.
+            </p>
+          </div>
+
+          <!-- 02 -->
+          <div class="lab-card takeaway">
+            <div class="eyebrow">02 — WHY THE FILTER FAILED</div>
+            <p>
+              The filter <code>public = 1</code> was a
+              <b>hard-coded condition inside the query</b>. It wasn't a separate
+              check. It wasn't enforced by the database. It was just text — and
+              text can be commented out.
+            </p>
+            <div class="takeaway-callout">
+              <b>The core insight:</b> anything the query <em>says</em> can be
+              <em>un-said</em> by the next input. Row-level access must be
+              enforced by the database itself (views, roles, row-level
+              security), not by string filters.
+            </div>
+          </div>
+
+          <!-- 03 -->
+          <div class="lab-card takeaway">
+            <div class="eyebrow">03 — WHY IT'S DANGEROUS</div>
+            <p>
+              Lab 01 let you log in. That's bad. But it only gave you the shape
+              of the app's response — "yes" or "no".
+            </p>
+            <p>
+              Lab 02 gives you a <b>viewer</b> into the database. The
+              <code>LIKE</code> clause is a perfect injection point because the
+              results are <em>printed back to you</em>. Anything a hidden row
+              contains is now on your screen.
+            </p>
+            <ul class="takeaway-list">
+              <li>
+                <b>Visibility bypass</b> — hidden, unpublished, or embargoed
+                products become public. <em>(This lab.)</em>
+              </li>
+              <li>
+                <b>Data exposure at scale</b> — in a real store, "products"
+                often carries internal fields: cost, margin, supplier IDs, stock
+                levels, sometimes draft copy or private notes.
+              </li>
+              <li>
+                <b>The same trick, wider scope</b> — swap the table name and the
+                identical <code>' --</code> reads users, orders, invoices, or
+                anything else the database user can see.
+              </li>
+              <li>
+                <b>No error needed</b> — this payload is silent. The page looks
+                normal, just with more rows. Nobody notices in logs.
+              </li>
+            </ul>
+          </div>
+
+          <!-- 04 -->
+          <div class="lab-card takeaway">
+            <div class="eyebrow">04 — THE THREE MISTAKES</div>
+            <ol class="takeaway-list numbered">
+              <li>
+                <b>Concatenation.</b>
+                <code>WHERE name LIKE '%" + v + "%'</code> — the search term is
+                glued into the SQL text.
+              </li>
+              <li>
+                <b>Security logic in the query string.</b>
+                <code>public = 1</code> looks like an authorization check, but
+                it's just a filter — trivially removable by an attacker.
+              </li>
+              <li>
+                <b>Verbose errors.</b> The app prints raw SQL errors back to the
+                browser, telling the attacker exactly what to fix. Even when the
+                payload works silently, the errors help shape the next attempt.
+              </li>
+            </ol>
+          </div>
+
+          <!-- 05 -->
+          <div class="lab-card takeaway">
+            <div class="eyebrow">05 — HOW TO FIX IT</div>
+            <p class="muted">Vulnerable:</p>
+            <pre><code>const sql = "SELECT name, price, public FROM products " +
+            "WHERE name LIKE '%" + v + "%' AND public = 1";</code></pre>
+            <p class="muted">
+              Safe — parameterized, with the wildcards inside the parameter:
+            </p>
+            <pre><code>const sql = "SELECT name, price, public FROM products " +
+            "WHERE name LIKE ? AND public = 1";
+db.query(sql, ["%" + v + "%"]);</code></pre>
+            <p>
+              Now <code>' --</code> is treated as <em>literally</em> the string
+              <code>%' --%</code> — a search term that matches no real product.
+              The injection is structurally impossible, not filtered out.
+            </p>
+            <div class="takeaway-callout">
+              <b>Rule of thumb:</b> if a value needs to be wrapped (in
+              <code>%</code>, quotes, brackets, tags), wrap it
+              <em>in the parameter</em>, never in the query text.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOTTOM CAROUSEL: SQL QUERY LOG -->
+      <div class="sql-carousel" id="sqlCarousel">
+        <div class="sql-carousel-inner">
+          <div class="carousel-header">
+            <h3><i class="fas fa-terminal"></i> SQL QUERY LOG</h3>
+            <div class="carousel-nav">
+              <button id="prevSlide" aria-label="Previous query">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <button id="nextSlide" aria-label="Next query">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+          <div class="carousel-track-container">
+            <div class="carousel-track" id="carouselTrack">
+              <div class="carousel-slide">
+                <div class="sql-entry empty-log">
+                  No queries executed yet. Try a search.
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="carousel-dots" id="carouselDots"></div>
         </div>
       </div>
     </div>
+
     <script src="script.js"></script>
   </body>
 </html>

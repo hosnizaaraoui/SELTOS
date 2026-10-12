@@ -232,53 +232,178 @@ function build(parts) {
   };
 }
 
-function renderTable(r) {
-  return '<div class="tw"><table class="lab-table"><tr>' +
-    r.head.map(h => "<th>" + esc(h) + "</th>").join("") +
-    "</tr>" +
-    r.rows.map(row =>
-      "<tr>" + row.map(cell => "<td>" + esc(cell) + "</td>").join("") + "</tr>"
-    ).join("") +
-    "</table></div>";
+/* ---------- UI ---------- */
+const $ = id => document.getElementById(id);
+
+/* ---------- TABS ---------- */
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const tabId = btn.dataset.tab;
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+    document.getElementById("tab-" + tabId).classList.add("active");
+  });
+});
+
+/* ---------- SQL LOG CAROUSEL ---------- */
+const sqlLog = [];
+let currentSlide = 0;
+
+function renderCarousel() {
+  const track = $("carouselTrack");
+  const dotsContainer = $("carouselDots");
+  if (!track) return;
+
+  if (sqlLog.length === 0) {
+    track.innerHTML = `<div class="carousel-slide"><div class="sql-entry empty-log">No queries executed yet. Try a search.</div></div>`;
+    dotsContainer.innerHTML = "";
+    return;
+  }
+
+  track.innerHTML = sqlLog.map(entry => {
+    const ts = entry.timestamp.toLocaleTimeString([], {
+      hour: "2-digit", minute: "2-digit", second: "2-digit"
+    });
+    return `<div class="carousel-slide">
+      <div class="sql-entry">${entry.html}</div>
+      <div class="timestamp"><i class="far fa-clock"></i> ${ts}</div>
+    </div>`;
+  }).join("");
+
+  dotsContainer.innerHTML = sqlLog.map((_, idx) =>
+    `<span class="dot ${idx === currentSlide ? "active" : ""}" data-index="${idx}"></span>`
+  ).join("");
+
+  if (currentSlide >= sqlLog.length) currentSlide = sqlLog.length - 1;
+  if (currentSlide < 0) currentSlide = 0;
+  updateCarouselPosition();
+
+  dotsContainer.querySelectorAll(".dot").forEach(dot => {
+    dot.addEventListener("click", e => {
+      const idx = parseInt(e.target.dataset.index, 10);
+      if (!isNaN(idx)) {
+        currentSlide = idx;
+        updateCarouselPosition();
+        updateDots();
+      }
+    });
+  });
 }
 
-document.getElementById("search").onclick = async () => {
+function updateCarouselPosition() {
+  const track = $("carouselTrack");
+  if (!track) return;
+  track.style.transform = `translateX(-${currentSlide * 100}%)`;
+}
+
+function updateDots() {
+  document.querySelectorAll(".dot").forEach((dot, idx) => {
+    dot.classList.toggle("active", idx === currentSlide);
+  });
+}
+
+function addQueryToLog(html) {
+  sqlLog.push({ html, timestamp: new Date() });
+  const wasAtEnd = currentSlide === sqlLog.length - 2;
+  if (sqlLog.length === 1 || wasAtEnd) {
+    currentSlide = sqlLog.length - 1;
+  }
+  renderCarousel();
+  updateDots();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const prev = $("prevSlide");
+  const next = $("nextSlide");
+  if (prev) prev.addEventListener("click", () => {
+    if (sqlLog.length === 0) return;
+    currentSlide = (currentSlide - 1 + sqlLog.length) % sqlLog.length;
+    updateCarouselPosition();
+    updateDots();
+  });
+  if (next) next.addEventListener("click", () => {
+    if (sqlLog.length === 0) return;
+    currentSlide = (currentSlide + 1) % sqlLog.length;
+    updateCarouselPosition();
+    updateDots();
+  });
+  renderCarousel();
+});
+
+/* ---------- PRODUCT RENDERING ---------- */
+function renderProducts(r) {
+  if (!r.rows.length) {
+    return '<div class="store-empty">No products found.</div>';
+  }
+  // Column order expected: name, price, public
+  const nameIdx = r.head.indexOf("name");
+  const priceIdx = r.head.indexOf("price");
+  const publicIdx = r.head.indexOf("public");
+
+  return '<div class="product-grid">' + r.rows.map(row => {
+    const name = nameIdx >= 0 ? row[nameIdx] : row[0];
+    const price = priceIdx >= 0 ? row[priceIdx] : row[1];
+    const isPublic = publicIdx >= 0 ? !!row[publicIdx] : true;
+    const badgeClass = isPublic ? "public" : "hidden";
+    const badgeText = isPublic ? "public" : "hidden";
+    return `<div class="product-card">
+      <div class="p-name">${esc(name)}</div>
+      <div class="p-price">$${esc(price)}</div>
+      <div class="p-badge ${badgeClass}">${badgeText}</div>
+    </div>`;
+  }).join("") + "</div>";
+}
+
+/* ---------- SEARCH ---------- */
+$("search").onclick = async () => {
   if (!(await ready("output"))) return;
-  const v = document.getElementById("q").value;
+  const v = $("q").value;
   if (!v) {
-    document.getElementById("output").innerHTML =
+    $("output").innerHTML =
       '<p class="result-bad">Enter a search term.</p>';
     return;
   }
+
   const b = build([
     "SELECT name, price, public FROM products WHERE name LIKE '%", { v: v },
     "%' AND public = 1"
   ]);
   const r = exec(b.sql);
 
-  let html = '<div class="query-box">' + b.html + "</div>";
+  let html = "";
   if (!r.ok) {
     html += '<p class="result-bad"><b>SQL error:</b> ' + esc(r.e) + "</p>";
   } else if (r.rows.length) {
-    const r2 = {
-      head: r.head,
-      rows: r.rows.map(row => row.map((c, i) =>
-        r.head[i] === "public" ? (c ? "public" : "hidden") : c
-      ))
-    };
-    html += renderTable(r2);
+    html += renderProducts(r);
   } else {
-    html += '<p class="result-bad">No products found.</p>';
+    html += '<div class="store-empty">No products found.</div>';
   }
-  document.getElementById("output").innerHTML = html;
+  $("output").innerHTML = html;
+
+  /* push to SQL log carousel */
+  addQueryToLog(b.html);
 };
 
-document.getElementById("reset").onclick = () => {
-  document.getElementById("q").value = "keyboard";
-  document.getElementById("output").innerHTML = "";
-};
+/* ---------- RESET (assignment tab) ---------- */
+const resetTop = $("reset");
+if (resetTop) {
+  resetTop.onclick = () => {
+    $("q").value = "keyboard";
+    $("output").innerHTML = "";
+  };
+}
 
-/* ---------- open this lab in a full browser tab (keeps ?theme= and any overrides) ---------- */
+/* ---------- RESET (store tab) ---------- */
+const resetStore = $("reset-store");
+if (resetStore) {
+  resetStore.onclick = () => {
+    $("q").value = "keyboard";
+    $("output").innerHTML = "";
+  };
+}
+
+/* ---------- open this lab in a full browser tab ---------- */
 document.getElementById("open-browser").onclick = () => {
   const url = new URL(location.href);
   url.searchParams.set("theme", document.documentElement.dataset.theme || "dracula");

@@ -237,6 +237,103 @@ function build(parts) {
 /* ---------- UI ---------- */
 const $ = id => document.getElementById(id);
 
+/* ---------- TABS ---------- */
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const tabId = btn.dataset.tab;
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+    document.getElementById("tab-" + tabId).classList.add("active");
+  });
+});
+
+/* ---------- SQL LOG CAROUSEL ---------- */
+const sqlLog = [];
+let currentSlide = 0;
+
+function renderCarousel() {
+  const track = $("carouselTrack");
+  const dotsContainer = $("carouselDots");
+  if (!track) return;
+
+  if (sqlLog.length === 0) {
+    track.innerHTML = `<div class="carousel-slide"><div class="sql-entry empty-log">No queries executed yet. Try logging in.</div></div>`;
+    dotsContainer.innerHTML = "";
+    return;
+  }
+
+  track.innerHTML = sqlLog.map(entry => {
+    const ts = entry.timestamp.toLocaleTimeString([], {
+      hour: "2-digit", minute: "2-digit", second: "2-digit"
+    });
+    return `<div class="carousel-slide">
+      <div class="sql-entry">${entry.html}</div>
+      <div class="timestamp"><i class="far fa-clock"></i> ${ts}</div>
+    </div>`;
+  }).join("");
+
+  dotsContainer.innerHTML = sqlLog.map((_, idx) =>
+    `<span class="dot ${idx === currentSlide ? "active" : ""}" data-index="${idx}"></span>`
+  ).join("");
+
+  if (currentSlide >= sqlLog.length) currentSlide = sqlLog.length - 1;
+  if (currentSlide < 0) currentSlide = 0;
+  updateCarouselPosition();
+
+  dotsContainer.querySelectorAll(".dot").forEach(dot => {
+    dot.addEventListener("click", e => {
+      const idx = parseInt(e.target.dataset.index, 10);
+      if (!isNaN(idx)) {
+        currentSlide = idx;
+        updateCarouselPosition();
+        updateDots();
+      }
+    });
+  });
+}
+
+function updateCarouselPosition() {
+  const track = $("carouselTrack");
+  if (!track) return;
+  track.style.transform = `translateX(-${currentSlide * 100}%)`;
+}
+
+function updateDots() {
+  document.querySelectorAll(".dot").forEach((dot, idx) => {
+    dot.classList.toggle("active", idx === currentSlide);
+  });
+}
+
+function addQueryToLog(html) {
+  sqlLog.push({ html, timestamp: new Date() });
+  const wasAtEnd = currentSlide === sqlLog.length - 2;
+  if (sqlLog.length === 1 || wasAtEnd) {
+    currentSlide = sqlLog.length - 1;
+  }
+  renderCarousel();
+  updateDots();
+}
+
+/* carousel nav buttons */
+document.addEventListener("DOMContentLoaded", () => {
+  const prev = $("prevSlide");
+  const next = $("nextSlide");
+  if (prev) prev.addEventListener("click", () => {
+    if (sqlLog.length === 0) return;
+    currentSlide = (currentSlide - 1 + sqlLog.length) % sqlLog.length;
+    updateCarouselPosition();
+    updateDots();
+  });
+  if (next) next.addEventListener("click", () => {
+    if (sqlLog.length === 0) return;
+    currentSlide = (currentSlide + 1) % sqlLog.length;
+    updateCarouselPosition();
+    updateDots();
+  });
+});
+
+/* ---------- LOGIN ---------- */
 $("login").onclick = async () => {
   if (!(await ready("output"))) return;
   const u = $("user").value;
@@ -249,7 +346,7 @@ $("login").onclick = async () => {
   ]);
   const r = exec(b.sql);
 
-  let html = '<div class="query-box">' + b.html + "</div>";
+  let html = "";
   if (!r.ok) {
     html += '<p class="result-bad"><b>SQL error:</b> ' + esc(r.e) + "</p>";
   } else if (r.rows.length) {
@@ -259,17 +356,34 @@ $("login").onclick = async () => {
     html += '<p class="result-bad">Authentication failed.</p>';
   }
   $("output").innerHTML = html;
+
+  /* push to SQL log carousel */
+  addQueryToLog(b.html);
 };
 
+/* ---------- RESET (assignment tab) ---------- */
 $("reset").onclick = () => {
-  $("user").value = "alice";
+  $("user").value = "ahmed";
   $("pass").value = "wrong";
   $("output").innerHTML = "";
 };
 
-/* ---------- open this lab in a full browser tab (keeps ?theme= and any overrides) ---------- */
+/* ---------- RESET (portal tab) ---------- */
+const resetPortal = $("reset-portal");
+if (resetPortal) {
+  resetPortal.onclick = () => {
+    $("user").value = "ahmed";
+    $("pass").value = "wrong";
+    $("output").innerHTML = "";
+  };
+}
+
+/* ---------- open this lab in a full browser tab ---------- */
 document.getElementById("open-browser").onclick = () => {
   const url = new URL(location.href);
   url.searchParams.set("theme", document.documentElement.dataset.theme || "dracula");
   window.open(url.toString(), "_blank", "noopener");
 };
+
+/* ---------- init carousel ---------- */
+renderCarousel();

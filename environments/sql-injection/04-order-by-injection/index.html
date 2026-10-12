@@ -10,93 +10,451 @@
         if (t) document.documentElement.dataset.theme = t;
       })();
     </script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
     <link rel="stylesheet" href="../../../css/theme.css" />
     <link rel="stylesheet" href="../../../css/components.css" />
     <link rel="stylesheet" href="../../../css/labs.css" />
+
+    <!-- Lab-04 specific styles only. Everything else comes from labs.css. -->
+    <style>
+      .catalog-sim {
+        border: 1px solid var(--line2);
+        background: var(--bg);
+        border-radius: 12px;
+        overflow: hidden;
+        margin: 10px 0;
+      }
+      .catalog-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 22px;
+        border-bottom: 1px solid var(--line);
+        background: color-mix(
+          in srgb,
+          var(--panel2, var(--bg)) 70%,
+          transparent
+        );
+      }
+      .catalog-logo {
+        font-weight: 800;
+        font-size: 13px;
+        letter-spacing: 0.06em;
+        color: var(--text);
+      }
+      .catalog-logo i {
+        color: var(--accent);
+        margin-right: 6px;
+      }
+      .catalog-body {
+        padding: 22px;
+      }
+      .catalog-form {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        gap: 10px;
+        align-items: end;
+        margin-bottom: 16px;
+      }
+      .catalog-form .field {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .catalog-form .field label {
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .catalog-form .lab-input {
+        margin: 0;
+      }
+      .catalog-form .lab-btn {
+        margin-top: 0;
+        white-space: nowrap;
+        height: 38px;
+      }
+      .catalog-empty {
+        color: var(--muted);
+        font-style: italic;
+        font-size: 12px;
+        text-align: center;
+        padding: 22px 0;
+      }
+      @media (max-width: 600px) {
+        .catalog-form {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
   </head>
   <body>
     <div class="lab-page">
       <div class="lab-brand">
-        <strong>SQL INJECTION / LAB 04</strong><div style="display: flex; align-items: center; gap: 14px">
+        <strong>SQL INJECTION / LAB 04</strong>
+        <div style="display: flex; align-items: center; gap: 14px">
           <span>ORDER BY CLAUSE</span>
-          <button id="open-browser" class="lab-btn secondary" style="margin-top: 0; padding: 5px 10px">Open in browser ↗</button>
+          <button
+            id="open-browser"
+            class="lab-btn secondary"
+            style="margin-top: 0; padding: 5px 10px"
+          >
+            Open in browser ↗
+          </button>
         </div>
       </div>
-      <div class="lab-container">
-        <h1>Order By Injection</h1>
-        <p class="lead">
-          The ORDER BY clause can't use placeholders in most drivers. Here the
-          sort column is concatenated directly — and that's all it takes.
-        </p>
 
-        <div class="lab-card">
-          <div class="eyebrow">PRODUCT CATALOG</div>
-          <label>Sort column</label
-          ><input id="sort" class="lab-input" value="name" autocomplete="off" />
-          <label>Category filter</label
-          ><input id="cat" class="lab-input" value="tools" autocomplete="off" />
-          <button id="run" class="lab-btn">RUN</button>
-          <div id="output"></div>
+      <!-- TABS -->
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="assignment">
+          <i class="fas fa-tasks"></i> Assignment
+        </button>
+        <button class="tab-btn" data-tab="catalog">
+          <i class="fas fa-list"></i> Catalog
+        </button>
+        <button class="tab-btn" data-tab="takeaways">
+          <i class="fas fa-brain"></i> Key Takeaways
+        </button>
+      </div>
+
+      <!-- ASSIGNMENT TAB -->
+      <div id="tab-assignment" class="tab-panel active">
+        <div class="lab-container">
+          <h1>Order By Injection</h1>
+          <p class="lead">
+            The <code>ORDER BY</code> clause can't use placeholders in most
+            drivers. Here the sort column is concatenated directly — and that's
+            all it takes.
+          </p>
+
+          <div class="lab-card">
+            <div class="eyebrow">CHALLENGES</div>
+
+            <div class="challenge">
+              <strong>01 — Sort by a hidden column</strong>
+              <small>
+                The result shows <code>name</code> and <code>cost</code>, but
+                the sort field accepts any column name. Sort by something that
+                isn't in the <code>SELECT</code> list.
+              </small>
+              <div class="challenge-hint">
+                <i class="fas fa-arrow-right"></i> Try it in the
+                <b>Catalog</b> tab. Watch the <b>SQL log</b> to see how the sort
+                value lands in the query.
+              </div>
+            </div>
+
+            <div class="challenge">
+              <strong
+                >02 — Leak the users table through the category field</strong
+              >
+              <small>
+                The category is wrapped in quotes — the classic string injection
+                point. Use a <code>UNION</code> to make
+                <code>users.password</code> appear in the results.
+              </small>
+            </div>
+
+            <div class="challenge">
+              <strong>03 — Fingerprint the schema with an error</strong>
+              <small>
+                Reference a table that doesn't exist and read the error the app
+                prints back.
+              </small>
+            </div>
+
+            <details class="lab-solutions">
+              <summary>View solutions</summary>
+
+              <div class="solution">
+                <strong>01 — Sort by a hidden column</strong>
+                <small>
+                  <code>ORDER BY</code> can reference any column, even ones not
+                  in the <code>SELECT</code> list.
+                </small>
+                <pre><code>Sort column: cost</code></pre>
+                <p class="muted" style="margin: 8px 0 0">
+                  The base query already selects <code>cost</code>, so this
+                  looks harmless — but the same trick works with any column the
+                  table has, whether it's shown or not.
+                </p>
+              </div>
+
+              <div class="solution">
+                <strong>02 — Leak the users table</strong>
+                <small>
+                  The category field is quoted — close the string and append a
+                  <code>UNION SELECT</code>.
+                </small>
+                <pre><code>Category filter: tools' UNION SELECT password, 1 FROM users --</code></pre>
+                <p class="muted" style="margin: 8px 0 0">
+                  The base query selects two columns (<code>name</code>,
+                  <code>cost</code>), so the <code>UNION</code> must also
+                  produce two. <code>password</code> fills the first slot; the
+                  literal <code>1</code> fills the second.
+                </p>
+              </div>
+
+              <div class="solution">
+                <strong>03 — Fingerprint the schema</strong>
+                <small>Reference a table that doesn't exist.</small>
+                <pre><code>Category filter: tools' UNION SELECT 1, 2 FROM secret --</code></pre>
+                <p class="muted" style="margin: 8px 0 0">
+                  The error names the offending table — the app shouldn't be
+                  telling the user that.
+                </p>
+              </div>
+            </details>
+
+            <button id="reset" class="lab-btn secondary">RESET</button>
+          </div>
         </div>
+      </div>
 
-        <div class="lab-card">
-          <div class="eyebrow">CHALLENGES</div>
-          <div class="challenge">
-            <strong>01 — Leak the admin password</strong
-            ><small
-              >The users table has a password column. Make it appear in the
-              result rows.</small
-            >
+      <!-- CATALOG TAB -->
+      <div id="tab-catalog" class="tab-panel">
+        <div class="lab-container">
+          <div class="catalog-sim">
+            <div class="catalog-header">
+              <div class="catalog-logo">
+                <i class="fas fa-list"></i> Nimbus Catalog
+              </div>
+              <div style="color: var(--muted); font-size: 11px">
+                Product Listing
+              </div>
+            </div>
+            <div class="catalog-body">
+              <div class="catalog-form">
+                <div class="field">
+                  <label for="cat">Category filter</label>
+                  <input
+                    id="cat"
+                    class="lab-input"
+                    value="tools"
+                    autocomplete="off"
+                  />
+                </div>
+                <div class="field">
+                  <label for="sort">Sort column</label>
+                  <input
+                    id="sort"
+                    class="lab-input"
+                    value="name"
+                    autocomplete="off"
+                  />
+                </div>
+                <button id="run" class="lab-btn">
+                  <i class="fas fa-play"></i> RUN
+                </button>
+              </div>
+              <div id="output"></div>
+              <div style="margin-top: 1rem; text-align: right">
+                <button
+                  id="reset-catalog"
+                  class="lab-btn secondary"
+                  style="padding: 0.4rem 0.9rem; font-size: 0.8rem"
+                >
+                  <i class="fas fa-undo-alt"></i> RESET
+                </button>
+              </div>
+            </div>
           </div>
-          <div class="challenge">
-            <strong>02 — Sort by a hidden column</strong
-            ><small
-              >Order by cost even though it's not shown in the SELECT
-              list.</small
-            >
-          </div>
-          <div class="challenge">
-            <strong>03 — Force an error to fingerprint the table</strong
-            ><small
-              >Make the query fail in a way that reveals the table name.</small
-            >
-          </div>
-          <button id="reset" class="lab-btn secondary">RESET</button>
         </div>
+      </div>
 
-        <details class="lab-solutions">
-          <summary>View solutions</summary>
-          <div class="solution">
-            <strong>01 — Leak the admin password</strong>
-            <small>Append a UNION SELECT to the sort column.</small>
-            <pre><code>name FROM products WHERE category = 'tools' UNION SELECT password, password, password FROM users --</code></pre>
-            <p class="muted" style="margin: 8px 0 0">
-              The injected UNION adds the users.password column as extra rows.
+      <!-- KEY TAKEAWAYS TAB -->
+      <div id="tab-takeaways" class="tab-panel">
+        <div class="lab-container">
+          <h1>Key Takeaways</h1>
+          <p class="lead">
+            Labs 01–03 all lived in the <code>WHERE</code> clause. Lab 04 shows
+            that the injection surface doesn't end there — every part of the
+            query that accepts input is a potential entry point.
+          </p>
+
+          <!-- 01 -->
+          <div class="lab-card takeaway">
+            <div class="eyebrow">01 — WHAT JUST HAPPENED</div>
+            <p>
+              The catalog has <b>two</b> places where user input reaches the
+              query: the category filter (quoted) and the sort column
+              (unquoted). The application <em>intended</em> this:
+            </p>
+            <pre><code>SELECT name, cost FROM products
+WHERE category = '<em>tools</em>'
+ORDER BY <em>name</em></code></pre>
+            <p class="muted">
+              But when you typed
+              <code>tools' UNION SELECT password, 1 FROM users --</code> in the
+              category field:
+            </p>
+            <pre><code>SELECT name, cost FROM products
+WHERE category = '<span class="inj">tools' UNION SELECT password, 1 FROM users --</span>'
+ORDER BY name</code></pre>
+            <p>
+              The <code>'</code> closes the string. The <code>UNION</code> adds
+              a second result set — the users' passwords, arranged into the same
+              two-column shape. The <code>--</code> comments out the leftover
+              quote and the <code>ORDER BY</code>. The page now prints passwords
+              where product names used to be.
             </p>
           </div>
-          <div class="solution">
-            <strong>02 — Sort by a hidden column</strong>
-            <small
-              >ORDER BY can reference columns not in the SELECT list.</small
-            >
-            <pre><code>cost</code></pre>
-            <p class="muted" style="margin: 8px 0 0">
-              The engine accepts any column name in ORDER BY, even ones not
-              selected.
+
+          <!-- 02 -->
+          <div class="lab-card takeaway">
+            <div class="eyebrow">02 — WHY ORDER BY IS SPECIAL</div>
+            <p>
+              In most drivers, <code>WHERE</code> values can be bound with
+              placeholders (<code>?</code>). Column <em>names</em> and
+              <code>ORDER BY</code> targets usually can't be — placeholders bind
+              <em>values</em>, not identifiers. So developers often concatenate
+              them instead, and that's the second injection point this lab
+              demonstrates.
+            </p>
+            <p>
+              Here, the sort field lands raw at the tail of the query with no
+              quotes around it. That means an attacker doesn't even need to
+              break out of a string: whatever they type <em>is</em> the next
+              token in the SQL statement.
+            </p>
+            <div class="takeaway-callout">
+              <b>The core insight:</b> <code>ORDER BY</code> can reference any
+              column of the table — including columns that aren't in the
+              <code>SELECT</code> list. Sorting by a hidden column is a one-word
+              injection.
+            </div>
+          </div>
+
+          <!-- 03 -->
+          <div class="lab-card takeaway">
+            <div class="eyebrow">03 — WHY IT'S DANGEROUS</div>
+            <p>
+              Labs 01–03 taught you the payloads. Lab 04 teaches you the
+              <b>surface area</b>: any unquoted piece of the query that accepts
+              input is game, not just the ones wrapped in quotes.
+            </p>
+            <ul class="takeaway-list">
+              <li>
+                <b>Second injection point.</b> Developers often parameterize
+                <code>WHERE</code> and then forget that <code>ORDER BY</code>,
+                <code>LIMIT</code>, column lists, and table names are still
+                concatenated.
+              </li>
+              <li>
+                <b>Hidden-column inference.</b> Even without a
+                <code>UNION</code>, sorting by a guessed column name tells you
+                whether that column exists — a slow but effective schema probe.
+              </li>
+              <li>
+                <b>Full <code>UNION</code> reach.</b> Once the quoted
+                <code>WHERE</code> value is broken, everything from Lab 03
+                applies: cross-table reads, one row per user, no error required.
+              </li>
+              <li>
+                <b>Error-based fingerprinting.</b> Referencing a table that
+                doesn't exist produces an error that names it — a free map of
+                what's there and what isn't.
+              </li>
+            </ul>
+            <p class="muted">
+              This is the same bug as Lab 01 — string concatenation — expressed
+              in a different part of the query. The lesson isn't "learn this
+              payload"; it's "audit every concatenation point".
             </p>
           </div>
-          <div class="solution">
-            <strong>03 — Force an error to fingerprint the table</strong>
-            <small>Reference a non-existent table in a UNION.</small>
-            <pre><code>name FROM products WHERE category = 'tools' UNION SELECT * FROM secret --</code></pre>
-            <p class="muted" style="margin: 8px 0 0">
-              The error message reveals the unknown table name, confirming the
-              schema.
-            </p>
+
+          <!-- 04 -->
+          <div class="lab-card takeaway">
+            <div class="eyebrow">04 — THE THREE MISTAKES</div>
+            <ol class="takeaway-list numbered">
+              <li>
+                <b>Concatenation beyond <code>WHERE</code>.</b> The category was
+                glued into the query as a string, and the sort column was glued
+                in as a raw identifier. Both are injection points.
+              </li>
+              <li>
+                <b>Believing "it's just a sort".</b> A column name feels less
+                dangerous than a value, so it gets less scrutiny. In SQL,
+                identifiers and values are both grammar — both must be
+                controlled.
+              </li>
+              <li>
+                <b>Verbose errors.</b> The app prints raw SQL errors back to the
+                browser. That turns every failed guess into feedback.
+              </li>
+            </ol>
           </div>
-        </details>
+
+          <!-- 05 -->
+          <div class="lab-card takeaway">
+            <div class="eyebrow">05 — HOW TO FIX IT</div>
+            <p class="muted">Vulnerable:</p>
+            <pre><code>const sql = "SELECT name, cost FROM products " +
+            "WHERE category = '" + cat + "' " +
+            "ORDER BY " + sort;</code></pre>
+            <p>
+              The <code>WHERE</code> value needs a placeholder — and the
+              <code>ORDER BY</code> target can't be a placeholder at all, so it
+              needs a <b>whitelist</b>:
+            </p>
+            <pre><code>const SORTABLE = ["name", "cost", "category"];
+
+const col = SORTABLE.includes(sort) ? sort : "name";
+
+const sql = "SELECT name, cost FROM products " +
+            "WHERE category = ? " +
+            "ORDER BY " + col;
+
+db.query(sql, [cat]);</code></pre>
+            <p>
+              Now the category is bound as a value (it can't break out of the
+              string) and the sort column is guaranteed to be one of three
+              known-safe identifiers. Anything else falls back to
+              <code>name</code>. The injection has nowhere left to go.
+            </p>
+            <div class="takeaway-callout">
+              <b>Rule of thumb:</b> values get <em>parameters</em>. Identifiers
+              (column names, table names, sort direction) get
+              <em>allowlists</em>. There is no third category — anything you're
+              tempted to "escape" is one of these two in disguise.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOTTOM CAROUSEL: SQL QUERY LOG -->
+      <div class="sql-carousel" id="sqlCarousel">
+        <div class="sql-carousel-inner">
+          <div class="carousel-header">
+            <h3><i class="fas fa-terminal"></i> SQL QUERY LOG</h3>
+            <div class="carousel-nav">
+              <button id="prevSlide" aria-label="Previous query">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <button id="nextSlide" aria-label="Next query">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+          <div class="carousel-track-container">
+            <div class="carousel-track" id="carouselTrack">
+              <div class="carousel-slide">
+                <div class="sql-entry empty-log">
+                  No queries executed yet. Try a run.
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="carousel-dots" id="carouselDots"></div>
+        </div>
       </div>
     </div>
+
     <script src="script.js"></script>
   </body>
 </html>
